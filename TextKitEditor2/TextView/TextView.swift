@@ -234,9 +234,6 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
             let isBackSpace = strcmp(char, "\\b")
             if (isBackSpace == -92) {
                 
-                if !paragraphString.containsListAttachment{
-                    return true
-                }
                 
                 // removing attribute for the selected range first.
                 let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
@@ -257,17 +254,21 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
                 }
                 
                 // prev paragraph
-                let range = paragraphRange.location - 1
-                if range >= 0{
-                    let prevParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range, length: 0))
-                    let prevParagraph = attributedText.attributedSubstring(from: prevParagraphRange)
-                    
-                        if prevParagraph.containsListAttachment{
-                            AddListAttrOnBackSpace = true
-                            return true
+                    let range = paragraphRange.location - 1
+                    if range >= 0{
+                        let prevParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range, length: 0))
+                        let prevParagraph = attributedText.attributedSubstring(from: prevParagraphRange)
+                        
+                        if paragraphString.string == "\n"{
+                            if prevParagraph.containsListAttachment{
+                                AddListAttrOnBackSpace = true
+                                return true
+                            }
                         }
-                }
-                return true
+
+                    }
+                    return true
+                
         
             }
         }
