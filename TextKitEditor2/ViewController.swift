@@ -29,8 +29,8 @@ class ViewController: UIViewController {
         view.addSubview(customTextView)
 
         NSLayoutConstraint.activate([
-            customTextView.leadingAnchor.constraint(equalTo: view.leadingAnchor,constant: 8),
-            customTextView.trailingAnchor.constraint(equalTo: view.trailingAnchor,constant: -8),
+            customTextView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customTextView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             customTextView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             customTextView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])

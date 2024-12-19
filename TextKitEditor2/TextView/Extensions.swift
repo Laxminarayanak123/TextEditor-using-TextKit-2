@@ -25,22 +25,7 @@ extension UITextView{
     }
 }
 
-extension TextView : NSTextStorageDelegate{
-    func textStorage(_ textStorage: NSTextStorage, willProcessEditing editedMask: NSTextStorage.EditActions, range editedRange: NSRange, changeInLength delta: Int) {
-        guard editedMask.contains(.editedCharacters) else { return }
 
-        
-        let paragraphRange = (textStorage.string as NSString).paragraphRange(for: editedRange)
-        
-        textStorage.enumerateAttributes(in: paragraphRange, options: []) { attributes, range, _ in
-            if let customValue = attributes[.customCase] {
-                textStorage.addAttribute(.customCase, value: customValue, range: paragraphRange)
-                return
-            }
-        }
-
-    }
-}
 
 extension NSAttributedString {
     var containsListAttachment: Bool {
