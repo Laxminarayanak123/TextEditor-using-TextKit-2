@@ -8,7 +8,7 @@
 import UIKit
 
 extension NSAttributedString.Key{
-    static let customCase = NSAttributedString.Key("CustomCase")
+    static let listType = NSAttributedString.Key("CustomCase")
     static let indentLevel = NSAttributedString.Key("IndentLevel")
 }
 
@@ -30,10 +30,28 @@ extension UITextView{
 extension NSAttributedString {
     var containsListAttachment: Bool {
         
-        if let _ = self.attribute(.customCase, at: 0, effectiveRange: nil) as? String{
+        if let _ = self.attribute(.listType, at: 0, effectiveRange: nil){
             return true
         }
         
         return false
+    }
+    
+    var indentLevel : Int{
+        if let value = self.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
+            return value
+        }
+        else{
+            return 0
+        }
+    }
+    
+    var NumberedListIndex: Int? {
+        
+        if let value = self.attribute(.listType, at: 0, effectiveRange: nil) as? Int{
+            return value
+        }
+        
+        return nil
     }
 }

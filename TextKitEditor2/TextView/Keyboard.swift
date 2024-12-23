@@ -38,7 +38,7 @@ extension TextView{
     }
     
     func textViewDidChangeSelection(_ textView: UITextView) {
-        _ = NSTextRange(selectedRange, contentManager: textLayoutManager!.textContentManager!)
+//        _ = NSTextRange(selectedRange, contentManager: textLayoutManager!.textContentManager!)
 //        print("selected Text", self.selectedRange, nstextrange?.location,nstextrange?.endLocation)
 //        textLayoutManager?.enumerateTextLayoutFragments(from: nstextrange?.location, using: { fragment in
 //            

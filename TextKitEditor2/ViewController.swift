@@ -24,7 +24,7 @@ class ViewController: UIViewController {
         
         customTextView = TextView(frame: .zero, textContainer: textContainer)
         customTextView.translatesAutoresizingMaskIntoConstraints = false
-//        customTextView.textContentStorage = textContentStorage
+        customTextView.textContentStorage = textContentStorage
         
         view.addSubview(customTextView)
 

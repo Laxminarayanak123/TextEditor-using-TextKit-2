@@ -20,11 +20,17 @@ extension TextView : NSTextLayoutManagerDelegate{
         if let textElement = textElement as? NSTextParagraph{
             let attrString = textElement.attributedString
             
-            if let _ = attrString.attribute(.customCase, at: 0, effectiveRange: nil) as? String{
-                let fragment = CheckboxTextLayoutFragment(textElement: textElement, range: textElement.elementRange)
+            if let value = attrString.attribute(.listType, at: 0, effectiveRange: nil){
+                
+                if let number = value as? Int{
+                    let fragment = NumberedListTextLayoutFragment(textElement: textElement, range: textElement.elementRange!, number: number)
+                    return fragment
+                }
+                let fragment = CheckboxTextLayoutFragment(textElement: textElement, range: textElement.elementRange!)
                 return fragment
+                
             }
-            
+
         }
     
         return NSTextLayoutFragment(textElement: textElement, range: textElement.elementRange)
@@ -76,8 +82,8 @@ extension TextView : NSTextStorageDelegate{
             
             let paragraphRange = (textStorage.string as NSString).paragraphRange(for: range)
             
-            if let customValue = attributes[.customCase] {
-                textStorage.addAttribute(.customCase, value: customValue, range: paragraphRange)
+            if let customValue = attributes[.listType] {
+                textStorage.addAttribute(.listType, value: customValue, range: paragraphRange)
             }
             
             if let indentValue = attributes[.indentLevel]{

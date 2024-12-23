@@ -103,6 +103,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
                 UIBarButtonItem(title: "left", style: .plain, target: self, action: #selector(leftIndent)),
                 UIBarButtonItem(title: "Tap Gest", style: .plain, target: self, action: #selector(toggleTap)),
                 UIBarButtonItem(title: "right", style: .plain, target: self, action: #selector(rightIndent)),
+                UIBarButtonItem(title: "number", style: .plain, target: self, action: #selector(toggleNumberList)),
             ]
             toolbar.sizeToFit()
             return toolbar
@@ -114,19 +115,62 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
             textStorage.append(NSAttributedString(string: "\n", attributes: typingAttributes))
         }
         
-        if let _ = paragraphString.attribute(.customCase, at: 0, effectiveRange: nil) as? String{
-            textStorage.removeAttribute(.customCase, range: paragraphRange)
+        if let _ = paragraphString.attribute(.listType, at: 0, effectiveRange: nil) as? String{
+            textStorage.removeAttribute(.listType, range: paragraphRange)
             leftIndent()
 
         }
         else{
-            textStorage.addAttribute(.customCase, value: "checkList", range: paragraphRange)
+            textStorage.addAttribute(.listType, value: "checkList", range: paragraphRange)
             rightIndent()
         }
 
     }
     
-    @objc func toggleTap(){
+    @objc func toggleNumberList(){
+        if selectedRange.location == textStorage.length && selectedRange.length == 0{
+            textStorage.append(NSAttributedString(string: "\n", attributes: typingAttributes))
+        }
+        
+        if let _ = paragraphString.attribute(.listType, at: 0, effectiveRange: nil) as? Int{
+            // if it is already a numbered list
+            textStorage.removeAttribute(.listType, range: paragraphRange)
+            leftIndent()
+            
+            modifyList(currentRange: paragraphRange)
+        }
+        else{
+           // if it is not a numbered list
+            let index = getValue(currentRange: paragraphRange, value: 0, mainString : paragraphString)
+            textStorage.addAttribute(.listType, value: index + 1, range: paragraphRange)
+            rightIndent()
+            
+            modifyList(currentRange: paragraphRange)
+        }
+        
+    }
+    
+    func modifyList(currentRange: NSRange) {
+        let nextLocation = currentRange.upperBound
+        
+        if nextLocation <= textStorage.length {
+            let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
+            let nextParagraphRange = mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: nextLocation, length: 0))
+            let nextString = textStorage.attributedSubstring(from: nextParagraphRange)
+            
+            if nextString.containsListAttachment {
+                if let _ = nextString.NumberedListIndex {
+                    let newValue = getValue2(currentRange: nextParagraphRange, value: 0, mainString: nextString)
+                    textStorage.addAttribute(.listType, value: newValue + 1, range: nextParagraphRange)
+                }
+                modifyList(currentRange: nextParagraphRange)
+            }
+        } else {
+            return
+        }
+    }
+    
+    @objc func toggleTap() {
 //        textStorage.setAttributedString(attributedText)
 //        tapToggle.toggle()
 //        if tapToggle{
@@ -192,7 +236,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
         // using values that are assigned in "shouldChangeTextIn", managing checkbox for previous paragraph and indent for current paragraph based on previous paragraph
         if let previousParagraphRange = previousCheckListParagraphRange, previousParagraphIsChecklist{
             if previousParagraphIsChecklist{
-                textStorage.addAttribute(.customCase, value: "checkList", range: previousParagraphRange)
+                textStorage.addAttribute(.listType, value: "checkList", range: previousParagraphRange)
             }
             
             if let value = paragraphString.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
@@ -206,7 +250,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
         
         // this is for previous paragraph, based on the values in "shouldChangeTextIn" for backspacing
         if AddListAttrOnBackSpace{
-            textStorage.addAttribute(.customCase, value: "checkList", range: paragraphRange)
+            textStorage.addAttribute(.listType, value: "checkList", range: paragraphRange)
             if let val = indentLevelForPrevious{
                 textStorage.addAttribute(.indentLevel, value: val, range: paragraphRange)
             }
@@ -248,7 +292,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
                 let paragraphRange = mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: selectedRange.location + selectedRange.length, length: 0))
                 
                 if selectedRange.length >= paragraphRange.length{
-                    textStorage.removeAttribute(.customCase, range: paragraphRange)
+                    textStorage.removeAttribute(.listType, range: paragraphRange)
                     textStorage.removeAttribute(.indentLevel, range: paragraphRange)
                     return true
                 }
@@ -258,8 +302,9 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
                    textView.selectedRange.length == 0 {
 
                     if textView.paragraphString.containsListAttachment{
-                        textStorage.removeAttribute(.customCase, range: paragraphRange)
+                        textStorage.removeAttribute(.listType, range: paragraphRange)
                         leftIndent()
+                        modifyList(currentRange: paragraphRange)
                         return false
                     }
                     else{
