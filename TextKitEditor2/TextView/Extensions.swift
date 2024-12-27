@@ -23,6 +23,17 @@ extension UITextView{
     var paragraphString: NSAttributedString {
         textStorage.attributedSubstring(from: paragraphRange)
     }
+    
+    var previousParagraphRange: NSRange {
+        let prevParagraphLocation = paragraphRange.location - 1
+        let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
+        if prevParagraphLocation > 0 {
+            let prevParagraphRange = mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: prevParagraphLocation, length: 0))
+            return prevParagraphRange
+        } else {
+            return mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: paragraphRange.location, length: 0))
+        }
+    }
 }
 
 

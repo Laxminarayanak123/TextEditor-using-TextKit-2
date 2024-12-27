@@ -92,4 +92,15 @@ extension TextView : NSTextStorageDelegate{
         }
 
     }
+    func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorage.EditActions, range editedRange: NSRange, changeInLength delta: Int) {
+        if newFlag{
+            modifyList(currentRange: previousParagraphRange)
+            newFlag = false
+        }
+        
+//        if flag1{
+//            modifyList(currentRange: previousParagraphRange)
+//            flag1 = false
+//        }
+    }
 }

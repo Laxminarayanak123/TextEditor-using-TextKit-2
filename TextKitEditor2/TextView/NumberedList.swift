@@ -78,7 +78,7 @@ extension TextView{
         
         let prevParagraphLocation = currentRange.location - 1
         
-        if prevParagraphLocation > 0{
+        if prevParagraphLocation >= 0{
             
             // getting the prevString.
             let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
@@ -119,7 +119,7 @@ extension TextView{
         
         let prevParagraphLocation = currentRange.location - 1
         
-        if prevParagraphLocation > 0{
+        if prevParagraphLocation >= 0{
             
             // getting the prevString.
             let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)

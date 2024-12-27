@@ -22,6 +22,7 @@ extension TextView{
             textStorage.addAttribute(.indentLevel, value: indent.value, range: indent.range)
         }
         
+        modifyList(currentRange: previousParagraphRange)
     }
         
     @objc func rightIndent() {
@@ -39,5 +40,6 @@ extension TextView{
             textStorage.addAttribute(.indentLevel, value: indent.value, range: indent.range)
         }
         
+        modifyList(currentRange: previousParagraphRange)
     }
 }
