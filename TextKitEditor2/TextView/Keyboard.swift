@@ -37,20 +37,11 @@ extension TextView{
         contentInset.bottom = .zero
     }
     
-    func textViewDidChangeSelection(_ textView: UITextView) {
-//        _ = NSTextRange(selectedRange, contentManager: textLayoutManager!.textContentManager!)
-//        print("selected Text", self.selectedRange, nstextrange?.location,nstextrange?.endLocation)
-//        textLayoutManager?.enumerateTextLayoutFragments(from: nstextrange?.location, using: { fragment in
-//            
-//            print("fragment", fragment)
-//            return true
-//        })
-        
-    }
+
     
     func createToolbar() -> UIView {
         let containerView = UIView()
-        containerView.backgroundColor = .white
+        containerView.backgroundColor = .systemGray5
         
         // Create a scroll view for horizontal scrolling
         let scrollView = UIScrollView()
@@ -69,7 +60,7 @@ extension TextView{
         // Create a stack view to hold the toolbar buttons
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.spacing = 50
+        stackView.spacing = 40
         stackView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(stackView)
         
@@ -81,18 +72,24 @@ extension TextView{
             stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
         ])
-        let symbolColor = UIColor.black
-        let configuration = UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
+        
+        let symbolColor = UIColor.label
+        let configuration = UIImage.SymbolConfiguration(pointSize: 21, weight: .semibold)
         
         // Add buttons to the stack view
         let buttons = [
             ("arrow.uturn.backward", #selector(undoAction)),
             ("arrow.uturn.forward", #selector(redoAction)),
-            ("checkmark.circle", #selector(toggleSelected)),
+            
+            ("bold", #selector(setBold)),
+            ("italic", #selector(setItalic)),
+            ("underline", #selector(setUnderline)),
+            ("strikethrough", #selector(setStrikeThrough)),
+            ("checkmark.circle", #selector(toggleCheckBoxWrapper)),
             ("list.number", #selector(toggleNumberList)),
-            ("text.alignleft", #selector(leftIndent)),
-            ("text.alignright", #selector(rightIndent)),
-                                ("hand.tap", #selector(toggleTap)),
+            ("text.alignleft", #selector(leftIndentWrapper)),
+            ("text.alignright", #selector(rightIndentWrapper)),
+            //                    ("hand.tap", #selector(toggleTap)),
         ]
         
         for (iconName, action) in buttons {
@@ -104,6 +101,22 @@ extension TextView{
             )
             button.addTarget(self, action: action, for: .touchUpInside)
             stackView.addArrangedSubview(button)
+            
+            if iconName == "bold" {
+                boldButton = button
+            }
+            
+            if iconName == "italic" {
+                italicButton = button
+            }
+            
+            if iconName == "underline" {
+                underlineButton = button
+            }
+            
+            if iconName == "strikethrough" {
+                strikeThroughButton = button
+            }
         }
         
         // Set container view height
@@ -112,4 +125,57 @@ extension TextView{
         return containerView
     }
     
+    func updateButton(for button: UIButton, isEnabled: Bool, iconName: String) {
+        let activeColor = UIColor.systemGreen
+        let inactiveColor = UIColor.label
+        
+        // Update the button's image
+        let configuration = UIImage.SymbolConfiguration(pointSize: 21, weight: .semibold)
+        let newImage = UIImage(systemName: iconName, withConfiguration: configuration)?
+            .withTintColor(isEnabled ? activeColor : inactiveColor, renderingMode: .alwaysOriginal)
+        
+        // Resize the button
+        button.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
+        button.setImage(newImage, for: .normal)
+        
+        // Set the background color
+//        button.backgroundColor = isEnabled ? activeColor : inactiveColor
+    }
+
+    func updateBoldButton() {
+        updateButton(for: boldButton!, isEnabled: isBoldEnabled, iconName: "bold")
+    }
+
+    func updateItalicButton() {
+        updateButton(for: italicButton!, isEnabled: isItalicEnabled, iconName: "italic")
+    }
+
+    func updateUnderlineButton() {
+        updateButton(for: underlineButton!, isEnabled: isUnderlineEnabled, iconName: "underline")
+    }
+
+    func updateStrikeButton() {
+        updateButton(for: strikeThroughButton!, isEnabled: isStrikeThroughEnabled, iconName: "strikethrough")
+    }
+    
+}
+    
+
+extension TextView{
+    //wrappers
+    
+    @objc func toggleCheckBoxWrapper(){
+        let range : NSRange = paragraphRange
+        toggleSelected(range: range)
+    }
+    
+    @objc func leftIndentWrapper(){
+        let range : NSRange = paragraphRange
+        leftIndent(range: range)
+    }
+    
+    @objc func rightIndentWrapper(){
+        let range : NSRange = paragraphRange
+        rightIndent(range: range)
+    }
 }

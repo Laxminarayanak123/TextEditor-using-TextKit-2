@@ -23,16 +23,32 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "F6EA89C8-07F3-4181-BCA4-E244B48B472C"
+            uuid = "A563741A-A37E-425A-A425-79D9BC10A104"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TextKitEditor2/TextView/TextView_Delegates.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "214"
+            endingLineNumber = "214"
+            landmarkName = "textView(_:shouldChangeTextIn:replacementText:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BF917E20-6578-4714-B1BF-1BB17159E10D"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "TextKitEditor2/TextView/TextView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "182"
-            endingLineNumber = "182"
-            landmarkName = "modifyList(currentRange:)"
+            startingLineNumber = "161"
+            endingLineNumber = "161"
+            landmarkName = "toggleSelected(range:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

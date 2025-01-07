@@ -32,7 +32,42 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
 
     
     var newFlag  : Bool = false
+    
+    
+    var returnedFlag : Bool = false
 
+    var flag2 : Bool = false
+    
+    var bool : Bool = false
+    var ranger : NSRange?
+    
+    var boldButton: UIButton?
+    var isBoldEnabled: Bool = false {
+        didSet {
+            updateBoldButton()
+        }
+    }
+    
+    var italicButton: UIButton?
+    var isItalicEnabled: Bool = false {
+        didSet {
+            updateItalicButton()
+        }
+    }
+    
+    var underlineButton: UIButton?
+    var isUnderlineEnabled: Bool = false {
+        didSet {
+            updateUnderlineButton()
+        }
+    }
+    
+    var strikeThroughButton: UIButton?
+    var isStrikeThroughEnabled : Bool = false {
+        didSet {
+            updateStrikeButton()
+        }
+    }
     
     override init(frame: CGRect, textContainer: NSTextContainer?) {
 
@@ -52,6 +87,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
         backgroundColor = UIColor.systemBackground
         setUpNotifications()
         checkListTapGesture()
+        
     }
     
     
@@ -61,24 +97,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
     
     
     private func setupTextView() {
-        // Create the NSTextStorage with styled text
-        let styledText = NSMutableAttributedString(
-            string: "Welcome to TextKit customization! This is an example of using textContainer, layoutManager, and textStorage. \n",
-            attributes: [
-                .font: UIFont.systemFont(ofSize: 18),
-                .foregroundColor: UIColor.label
-            ]
-        )
-
-        styledText.addAttribute(
-            .foregroundColor,
-            value: UIColor.systemBlue,
-            range: NSRange(location: 0, length: 7)
-        )
-        
-      
-        
-        let font = UIFont(name: "Noteworthy-Bold", size: 24) ?? .systemFont(ofSize: 24)
+        let font =  UIFont.systemFont(ofSize: 24)
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = font.pointSize * 0.15
 //        paragraphStyle.headIndent = 30
@@ -87,6 +106,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
         typingAttributes = [
             .font: font,
             .paragraphStyle: paragraphStyle,
+            .foregroundColor: UIColor.label
         ]
         
         
@@ -98,7 +118,8 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
             string: string1,
             attributes: [
                 .font: font,
-                .paragraphStyle: paragraphStyle
+                .paragraphStyle: paragraphStyle,
+                .foregroundColor: UIColor.label
             ]
         )
         
@@ -127,6 +148,8 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
             print("Cannot undo")
         }
         undoManager?.undo()
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
     }
     
     @objc func redoAction() {
@@ -136,28 +159,56 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
             print("Cannot redo")
         }
         undoManager?.redo()
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
     }
+    
+    
+//    func setMyObjectTitle(_ newTitle: String) {
+//        let currentTitle = o1.title
+//        if newTitle != currentTitle {
+//            undoManager?.registerUndo(withTarget: self) { target in
+//                target.setMyObjectTitle(currentTitle)
+//            }
+//            undoManager?.setActionName(NSLocalizedString("Title Change", comment: "title undo"))
+//            o1.title = newTitle
+//        }
+//    }
+   
 
-    @objc func toggleSelected(){
+    func toggleSelected(range : NSRange){
         
         if (selectedRange.location == textStorage.length && selectedRange.length == 0 ) || (selectedRange.upperBound == textStorage.length){
-            textStorage.append(NSAttributedString(string: "\n", attributes: typingAttributes))
+//            textStorage.append(NSAttributedString(string: "\n", attributes: typingAttributes))
+            newLineAtLast(append: true, range : range, toggle: true)
         }
         
-        if let _ = paragraphString.attribute(.listType, at: 0, effectiveRange: nil) as? String{
-            
-                textStorage.removeAttribute(.listType, range: self.paragraphRange)
-                leftIndent()
+        let paragraphRange = textStorage.mutableString.paragraphRange(for: range)
+        let paraString = textStorage.attributedSubstring(from: paragraphRange)
+        
 
+        if let _ = paraString.attribute(.listType, at: 0, effectiveRange: nil) as? String{
+            
+            textStorage.removeAttribute(.listType, range: paragraphRange)
+
+            leftIndentForListToggle(range: paragraphRange)
         }
         else{
-            if let _ = paragraphString.NumberedListIndex{
-                toggleNumberList()
-            }
-                textStorage.addAttribute(.listType, value: "checkList", range: self.paragraphRange)
-                rightIndent()
-   
+//            if let _ = paragraphString.NumberedListIndex{
+//                toggleNumberList()
+//            }
+            textStorage.addAttribute(.listType, value: "checkList", range: paragraphRange)
+           
+            rightIndentForListToggle(range: paragraphRange)
         }
+        
+        undoManager?.registerUndo(withTarget: self, handler: { _ in
+            self.toggleSelected(range: paragraphRange)
+        })
+        
+        undoManager?.setActionName("From Toggle")
+        
+        
 
     }
     
@@ -169,19 +220,19 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
         if let _ = paragraphString.attribute(.listType, at: 0, effectiveRange: nil) as? Int{
             // if it is already a numbered list
             textStorage.removeAttribute(.listType, range: paragraphRange)
-            leftIndent()
+//            leftIndent()
             
             modifyList(currentRange: paragraphRange)
         }
         else{
            // if it is not a numbered list
             if paragraphString.containsListAttachment && paragraphString.NumberedListIndex == nil{
-                toggleSelected()
+//                toggleSelected()
             }
             
             let index = getValue(currentRange: paragraphRange, value: 0, mainString : paragraphString)
             textStorage.addAttribute(.listType, value: index + 1, range: paragraphRange)
-            rightIndent()
+//            rightIndent()
             
             modifyList(currentRange: paragraphRange)
         }
@@ -282,198 +333,7 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
         }
     }
     
-    func textViewDidChange(_ textView: UITextView) {
-        
-        // using values that are assigned in "shouldChangeTextIn", managing checkbox for previous paragraph and indent for current paragraph based on previous paragraph
-        if let previousParagraphRange = previousListParagraphRange{
-                                
-
-            if let value = paragraphString.NumberedListIndex{
-                textStorage.addAttribute(.listType, value: value, range: NSRange(location: previousParagraphRange.location, length: 1))
-                textStorage.addAttribute(.indentLevel, value: paragraphString.indentLevel, range: NSRange(location: previousParagraphRange.location, length: 1))
-            }
-            else{
-                textStorage.addAttribute(.listType, value: "checkList", range: NSRange(location: previousParagraphRange.location, length: 1))
-            }
-
-            if let value = paragraphString.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
-                textStorage.addAttribute(.indentLevel, value: value, range: NSRange(location: previousParagraphRange.location, length: 1))
-            }
-
-            
-            modifyList(currentRange: NSRange(location: previousParagraphRange.location, length: 0))
-            self.previousListParagraphRange = nil
-            
-            
-
-        }
-        
-        // this is for previous paragraph, based on the values in "shouldChangeTextIn" for backspacing
-        if AddListAttrOnBackSpace{
-            if let numberedListValue = numberedListValue{
-                textStorage.addAttribute(.listType, value: numberedListValue, range: paragraphRange)
-            }
-            else{
-                textStorage.addAttribute(.listType, value: "checkList", range: paragraphRange)
-            }
-            
-            if let val = indentLevelForPrevious{
-                textStorage.addAttribute(.indentLevel, value: val, range: paragraphRange)
-            }
-            
-            modifyList(currentRange: paragraphRange)
-            indentLevelForPrevious = nil
-            AddListAttrOnBackSpace = false
-            numberedListValue = nil
-        }
-        
-        if modifyListOnBackSpace{
-            if paragraphRange.location == 0, paragraphString.NumberedListIndex != nil {
-                textStorage.addAttribute(.listType, value: 1, range: previousParagraphRange)
-            }
-            modifyList(currentRange: paragraphRange)
-            modifyListOnBackSpace = false
-            flag1 = true
-        }
-        
-        if modifyListOnBackSpace2{
-            if paragraphRange.location == 0, paragraphString.NumberedListIndex != nil  {
-                textStorage.addAttribute(.listType, value: 1, range: paragraphRange)
-            }
-            modifyList(currentRange: previousParagraphRange)
-            modifyListOnBackSpace2 = false
-        }
-        
-        if flag{
-//            modifyList(currentRange: previousParagraphRange)
-            newFlag = true
-            flag = false
-        }
-//        modifyList(currentRange: paragraphRange)
-    }
-    
-    
-    
-    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        
-        if text == "\n" {
-            if selectedRange.location == textStorage.length && selectedRange.length == 0{
-                textStorage.append(NSAttributedString(string: "\n", attributes: typingAttributes))
-            }
-            
-            // if the current paragraph is a checkbox and you are trying to return at the starting location of paragraph then create a checkbox above it
-            if paragraphString.containsListAttachment{
-
-                previousListParagraphRange = paragraphRange
-
-                return true
-                
-            }
-
-            return true
-        }
-        
-        //for backspaces
-        if let char = text.cString(using: String.Encoding.utf8) {
-            let isBackSpace = strcmp(char, "\\b")
-            if (isBackSpace == -92) {
-                
-                
-                // ( the scenario where holding the backspace and deleting text. here we are removing the attributes of the down most paragraph, otherwise the attributes will affect the paragraph above it )
-                let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
-                let paragraphRange = mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: selectedRange.location + selectedRange.length, length: 0))
-                
-                let startingParagraphRange = mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: selectedRange.location, length: 0))
-                
-                
-                if (selectedRange.length >= paragraphRange.length) && ((selectedRange.upperBound + 1) == paragraphRange.upperBound){
-                    let string = textStorage.attributedSubstring(from: paragraphRange)
-//                    let startingParagraph = textStorage.attributedSubstring(from: startingParagraphRange)
-                    
-                    if let _ = string.NumberedListIndex{
-                        flag = true
-                    }
-                    
-                    if startingParagraphRange.location != selectedRange.location{
-                        textStorage.removeAttribute(.listType, range: paragraphRange)
-                        textStorage.removeAttribute(.indentLevel, range: paragraphRange)
-                    }
-                    modifyListOnBackSpace = true
-                    return true
-                }
-                
-                if selectedRange.length > 0 {
-                    modifyListOnBackSpace2 = true
-                }
-                
-                // removing attribute if the caret is at starting position of a paragraph
-                if textView.selectedRange.location == textView.paragraphRange.location,
-                   textView.selectedRange.length == 0 {
-
-                    if textView.paragraphString.containsListAttachment{
-                        textStorage.removeAttribute(.listType, range: paragraphRange)
-                        leftIndent()
-                        modifyList(currentRange: paragraphRange)
-                        return false
-                    }
-                    else{
-                        
-                        // Paragraphs defaultly won't have this .indentLevel, so when backspacing, the above paragraph gets the indent level of current paragraph. so for the paragraphs which don't have the .indent level, we are giving a value 0 to prevent from getting overriden.
-                        let range = paragraphRange.location - 1
-                        if range >= 0{
-                            let prevParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range, length: 0))
-                            let prevParagraph = attributedText.attributedSubstring(from: prevParagraphRange)
-                            if let _ = prevParagraph.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
-//                                textStorage.removeAttribute(.indentLevel, range: paragraphRange)
-                            }
-                            else{
-                                textStorage.addAttribute(.indentLevel, value: 0, range: prevParagraphRange)
-                            }
-                            
-                            modifyList(currentRange: prevParagraphRange)
-                        }
-                    }
-                }
-                
-                
-                // if the previous paragraph is a checklist and empty string, then on backspacing on current paragraph(empty string), prev paragraph needs to retain its checklist.
-                let range = paragraphRange.location - 1
-                if range >= 0{
-                    let prevParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range, length: 0))
-                    let prevParagraph = attributedText.attributedSubstring(from: prevParagraphRange)
-                    
-                    if textView.selectedRange.location == textView.paragraphRange.location,
-                    textView.selectedRange.length == 0{
-                        if prevParagraph.containsListAttachment && prevParagraph.string == "\n"{
-                            AddListAttrOnBackSpace = true
-                            
-                            if let value = prevParagraph.NumberedListIndex{
-                                numberedListValue = value
-                            }
-                            
-                            if let value = prevParagraph.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
-                                indentLevelForPrevious = value
-                            }
-                            
-                            return true
-                        }
-                        
-                        
-                        modifyListOnBackSpace = true
-                    }
-
-                }
-                return true
-                
-        
-            }
-        }
-       
-        return true
-        
-        
-    }
-    
+   
     
 
 }

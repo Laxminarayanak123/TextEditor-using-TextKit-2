@@ -65,4 +65,16 @@ extension NSAttributedString {
         
         return nil
     }
+    
+    var paragraphType : paragraphType{
+        if let value = self.attribute(.listType, at: 0, effectiveRange: nil){
+            if let _ = value as? Int{
+                return .NumberedList
+            }
+            else{
+                return .checkList
+            }
+        }
+        return .plainParagraph
+    }
 }

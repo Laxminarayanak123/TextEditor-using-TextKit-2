@@ -73,8 +73,7 @@ extension TextView : NSTextContentStorageDelegate{
 
 extension TextView : NSTextStorageDelegate{
     func textStorage(_ textStorage: NSTextStorage, willProcessEditing editedMask: NSTextStorage.EditActions, range editedRange: NSRange, changeInLength delta: Int) {
-        guard editedMask.contains(.editedCharacters) else { return }
-
+//        guard editedMask.contains(.ed) else { return }
         
         let editedRange = (textStorage.string as NSString).paragraphRange(for: editedRange)
         
