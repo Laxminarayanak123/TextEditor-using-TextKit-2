@@ -29,7 +29,7 @@ class NumberedListTextLayoutFragment : NSTextLayoutFragment {
     
     override func draw(at point: CGPoint, in context: CGContext) {
         
-        let font = UIFont(name: "Noteworthy-Bold", size: 24) ?? .systemFont(ofSize: 24)
+        let font = UIFont.systemFont(ofSize: 24)
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: UIColor.label,

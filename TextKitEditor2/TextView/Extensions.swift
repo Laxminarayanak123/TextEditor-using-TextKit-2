@@ -40,7 +40,7 @@ extension UITextView{
 
 extension NSAttributedString {
     var containsListAttachment: Bool {
-        
+        if self.string == "" { return false }
         if let _ = self.attribute(.listType, at: 0, effectiveRange: nil){
             return true
         }

@@ -32,7 +32,8 @@ extension TextView{
 //        undoManager?.endUndoGrouping()
         
         
-//        modifyList(currentRange: previousParagraphRange)
+        let paragraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 0))
+        modifyList(currentRange: paragraphRange, updateSelf: true)
     }
         
     @objc func rightIndent(range : NSRange) {
@@ -58,8 +59,8 @@ extension TextView{
         }
         
 //        undoManager?.endUndoGrouping()
-        
-//        modifyList(currentRange: previousParagraphRange)
+        let paragraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 0))
+        modifyList(currentRange: paragraphRange, updateSelf: true)
     }
     
     func leftIndentForListToggle(range : NSRange) {
@@ -99,65 +100,6 @@ extension TextView{
         
     }
 
-    func backspaceAtStart(range : NSRange){
-        undoManager?.beginUndoGrouping()
-
-        let string = textStorage.attributedSubstring(from: textStorage.mutableString.paragraphRange(for: NSRange(location: range.location + 1, length: 1)))
-        
-        let attributes = string.attributes(at: 0, effectiveRange: nil)
-        
-        let prevString = textStorage.attributedSubstring(from: textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 1)))
-        
-        let indentLevel = prevString.indentLevel
-        
-        
-        // if the prevParagraph don't have .indentlevel, then give 0
-        textStorage.addAttribute(.indentLevel, value: indentLevel, range: NSRange(location: range.location, length: 1))
-        
-//        let prevAttributes = prevString.attributes(at: 0, effectiveRange: nil)
-        
-        textStorage.replaceCharacters(in: NSRange(location: range.location, length: range.length), with: NSAttributedString(string: ""))
-        
-        textStorage.addAttribute(.indentLevel, value: indentLevel, range: NSRange(location: range.location, length: 1))
-        
-        selectedRange.location = range.location
-        
-        
-        undoManager?.registerUndo(withTarget: self, handler: { _ in
-            self.returnBack(range: range, attributes: attributes)
-        })
-        
-        undoManager?.endUndoGrouping()
-    }
-    
-    func returnBack(range : NSRange, attributes : [NSAttributedString.Key : Any]){
-        undoManager?.beginUndoGrouping()
-        
-        let prevAttributes = textStorage.attributes(at: range.location, effectiveRange: nil)
-        
-        textStorage.insert(NSAttributedString(string: "\n"), at: range.location)
-        
-        let prevParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 0))
-        
-        let paragraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location + 1, length: 0))
-        
-        textStorage.removeAttribute(.listType, range: paragraphRange)
-        textStorage.removeAttribute(.indentLevel, range: paragraphRange)
-        
-        textStorage.addAttributes(attributes, range: paragraphRange)
-        
-        textStorage.addAttributes(prevAttributes, range: prevParagraphRange)
-        
-        selectedRange.location = range.location + 1
-        
-        undoManager?.registerUndo(withTarget: self, handler: { _ in
-            self.backspaceAtStart(range: range)
-        })
-        
-        undoManager?.endUndoGrouping()
-    }
-    
-    
     func newLineAtLast(append : Bool, range : NSRange, toggle : Bool){
         undoManager?.beginUndoGrouping()
         

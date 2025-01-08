@@ -15,7 +15,7 @@ extension TextView{
         let currentTraits = currentFont.fontDescriptor.symbolicTraits
         
         if selectedRange.length > 0 {
-            modifyFontTraits(in: selectedRange, traits: .traitBold)
+            addBoldandItalicTraits(in: selectedRange, traits: .traitBold)
         } else {
             if isBoldEnabled {
                 let new = UIFont(descriptor: currentFont.fontDescriptor.withSymbolicTraits([.traitBold, currentTraits])!, size: 24)
@@ -37,7 +37,7 @@ extension TextView{
         
         
         if selectedRange.length > 0 {
-            modifyFontTraits(in: selectedRange, traits: .traitItalic)
+            addBoldandItalicTraits(in: selectedRange, traits: .traitItalic)
         } else {
             if isItalicEnabled {
                 let new = UIFont(descriptor: currentFont.fontDescriptor.withSymbolicTraits([.traitItalic, currentTraits])!, size: 24)
@@ -81,8 +81,9 @@ extension TextView{
     }
     
     //for bold and italic
-    private func modifyFontTraits(in range: NSRange, traits: UIFontDescriptor.SymbolicTraits) {
-        
+    func addBoldandItalicTraits(in range: NSRange, traits: UIFontDescriptor.SymbolicTraits) {
+        undoManager?.beginUndoGrouping()
+        let text = textStorage.attributedSubstring(from: range)
         let startingFont = textStorage.attribute(.font, at: range.location, effectiveRange: nil) as! UIFont
         let startingTraits = startingFont.fontDescriptor.symbolicTraits
         let shouldAddTrait = !startingTraits.contains(traits)
@@ -106,11 +107,36 @@ extension TextView{
                 textStorage.addAttribute(.font, value: newFont, range: subrange)
             }
         }
+        
+        selectedRange = range
+        updateHighlighting()
+        undoManager?.registerUndo(withTarget: self, handler: { _ in
+//            self.modifyFontTraits(in: range, traits: traits)
+            self.restoreBoldandItalic(range: range, text: text, traits: traits )
+        })
+        
+        undoManager?.endUndoGrouping()
+    }
+    
+    func restoreBoldandItalic(range: NSRange, text: NSAttributedString, traits: UIFontDescriptor.SymbolicTraits) {
+        undoManager?.beginUndoGrouping()
+        
+        textStorage.replaceCharacters(in: range, with: text)
+        
+        selectedRange = range
+        updateHighlighting()
+        undoManager?.registerUndo(withTarget: self, handler: { _ in
+            self.addBoldandItalicTraits(in: range, traits: traits)
+        })
+        
+        undoManager?.endUndoGrouping()
     }
     
     //for underline
-    private func modifyFontForUnderline(in range: NSRange) {
+    func modifyFontForUnderline(in range: NSRange) {
+        undoManager?.beginUndoGrouping()
         // Check if the starting point of the selection has an underline
+        let text = textStorage.attributedSubstring(from: range)
         let startingUnderline = (textStorage.attribute(.underlineStyle, at: range.location, effectiveRange: nil) as? Int) ?? 0
         let shouldAddUnderline = startingUnderline == 0 // Add underline if not present
         
@@ -124,10 +150,35 @@ extension TextView{
                 textStorage.removeAttribute(.underlineStyle, range: subrange)
             }
         }
+        
+        selectedRange = range
+        updateHighlighting()
+        undoManager?.registerUndo(withTarget: self, handler: { _ in
+            self.restoreUnderline(range: range, text: text)
+        })
+        
+        undoManager?.endUndoGrouping()
+    }
+    
+    func restoreUnderline(range: NSRange, text: NSAttributedString) {
+        undoManager?.beginUndoGrouping()
+        
+        textStorage.replaceCharacters(in: range, with: text)
+        
+        selectedRange = range
+        updateHighlighting()
+        undoManager?.registerUndo(withTarget: self, handler: { _ in
+            self.modifyFontForUnderline(in: range)
+        })
+        
+        undoManager?.endUndoGrouping()
     }
 
     //for strikethrough
-    private func modifyStrikeThrough(in range: NSRange) {
+    func modifyStrikeThrough(in range: NSRange) {
+        undoManager?.beginUndoGrouping()
+        let text = textStorage.attributedSubstring(from: range)
+        
         // Check if the starting point of the selection has a strike-through
         let startingStrikeThrough = (textStorage.attribute(.strikethroughStyle, at: range.location, effectiveRange: nil) as? Int) ?? 0
         let shouldAddStrikeThrough = startingStrikeThrough == 0
@@ -139,6 +190,54 @@ extension TextView{
             } else {
                 textStorage.removeAttribute(.strikethroughStyle, range: subrange)
             }
+        }
+        
+        selectedRange = range
+        updateHighlighting()
+        undoManager?.registerUndo(withTarget: self, handler: { _ in
+            self.restoreStrikeThrough(range: range, text: text)
+        })
+        
+        undoManager?.endUndoGrouping()
+    }
+    
+    func restoreStrikeThrough(range: NSRange, text: NSAttributedString) {
+        undoManager?.beginUndoGrouping()
+        
+        textStorage.replaceCharacters(in: range, with: text)
+        
+        selectedRange = range
+        updateHighlighting()
+        undoManager?.registerUndo(withTarget: self, handler: { _ in
+            self.modifyStrikeThrough(in: range)
+        })
+        
+        undoManager?.endUndoGrouping()
+    }
+    
+    func updateHighlighting(){
+        guard let font = textStorage.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? UIFont else {
+            isBoldEnabled = false
+            isItalicEnabled = false
+            isUnderlineEnabled = false
+            isStrikeThroughEnabled = false
+            return
+        }
+        
+        
+        isBoldEnabled = font.fontDescriptor.symbolicTraits.contains(.traitBold)
+        isItalicEnabled = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
+        
+        if let underlineStyle = textStorage.attribute(.underlineStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
+            isUnderlineEnabled = underlineStyle != 0
+        } else {
+            isUnderlineEnabled = false
+        }
+        
+        if let strike = textStorage.attribute(.strikethroughStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
+            isStrikeThroughEnabled = strike != 0
+        } else {
+            isStrikeThroughEnabled = false
         }
     }
 }

@@ -86,7 +86,7 @@ extension TextView{
             ("underline", #selector(setUnderline)),
             ("strikethrough", #selector(setStrikeThrough)),
             ("checkmark.circle", #selector(toggleCheckBoxWrapper)),
-            ("list.number", #selector(toggleNumberList)),
+            ("list.number", #selector(toggleNumberedListWrapper)),
             ("text.alignleft", #selector(leftIndentWrapper)),
             ("text.alignright", #selector(rightIndentWrapper)),
             //                    ("hand.tap", #selector(toggleTap)),
@@ -167,6 +167,11 @@ extension TextView{
     @objc func toggleCheckBoxWrapper(){
         let range : NSRange = paragraphRange
         toggleSelected(range: range)
+    }
+    
+    @objc func toggleNumberedListWrapper(){
+        let range : NSRange = paragraphRange
+        toggleNumberList(range: range)
     }
     
     @objc func leftIndentWrapper(){
