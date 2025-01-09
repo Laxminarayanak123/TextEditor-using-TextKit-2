@@ -117,6 +117,7 @@ extension TextView{
     func textViewDidChangeSelection(_ textView: UITextView) {
 
         updateHighlighting()
+        
     }
     
     
@@ -136,8 +137,7 @@ extension TextView{
             let paragraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: replaceRange.location, length: 0))
             
             
-            // if replace range is in same paragraph
-            if (paragraphRange.location != lastParagraphRange.location) || (paragraphRange.length != lastParagraphRange.length){
+            if (paragraphRange.location != lastParagraphRange.location) /*|| (paragraphRange.length != lastParagraphRange.length)*/{
                 textStorage.removeAttribute(.listType, range: lastParagraphRange)
                 textStorage.removeAttribute(.indentLevel, range: lastParagraphRange)
             }
@@ -150,13 +150,16 @@ extension TextView{
             
             // adding attributes of first paragraph
             if firstParagraphRange.lowerBound == replaceRange.lowerBound{
-                textStorage.addAttributes(firstParagraphAttributes, range: NSRange(location: replaceRange.lowerBound, length: length))
+                if let list = firstParagraphAttributes[.listType] {
+                    textStorage.addAttribute(.listType, value: list, range: NSRange(location: replaceRange.lowerBound, length: length))
+                }
+                if let indentLevel = firstParagraphAttributes[.indentLevel] {
+                    textStorage.addAttribute(.indentLevel, value: indentLevel, range: NSRange(location: replaceRange.lowerBound, length: length))
+                }
             }
             
             selectedRange = NSRange(location: replaceRange.location, length: 0)
             
-            
-//            let
             let range = textStorage.mutableString.paragraphRange(for: NSRange(location: replaceRange.location, length: 0))
             modifyList(currentRange: range, updateSelf: true)
         }

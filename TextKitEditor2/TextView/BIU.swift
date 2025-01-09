@@ -54,7 +54,7 @@ extension TextView{
     
     @objc func setUnderline() {
         isUnderlineEnabled.toggle()
-      
+        
         if selectedRange.length > 0 {
             modifyFontForUnderline(in: selectedRange)
         } else {
@@ -68,7 +68,7 @@ extension TextView{
     
     @objc func setStrikeThrough() {
         isStrikeThroughEnabled.toggle()
-    
+        
         if selectedRange.length > 0 {
             modifyStrikeThrough(in: selectedRange)
         } else {
@@ -111,7 +111,6 @@ extension TextView{
         selectedRange = range
         updateHighlighting()
         undoManager?.registerUndo(withTarget: self, handler: { _ in
-//            self.modifyFontTraits(in: range, traits: traits)
             self.restoreBoldandItalic(range: range, text: text, traits: traits )
         })
         
@@ -173,7 +172,7 @@ extension TextView{
         
         undoManager?.endUndoGrouping()
     }
-
+    
     //for strikethrough
     func modifyStrikeThrough(in range: NSRange) {
         undoManager?.beginUndoGrouping()
@@ -216,28 +215,53 @@ extension TextView{
     }
     
     func updateHighlighting(){
-        guard let font = textStorage.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? UIFont else {
-            isBoldEnabled = false
-            isItalicEnabled = false
-            isUnderlineEnabled = false
-            isStrikeThroughEnabled = false
-            return
-        }
-        
-        
-        isBoldEnabled = font.fontDescriptor.symbolicTraits.contains(.traitBold)
-        isItalicEnabled = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
-        
-        if let underlineStyle = textStorage.attribute(.underlineStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
-            isUnderlineEnabled = underlineStyle != 0
+        if selectedRange.length > 0 {
+            guard let font = textStorage.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? UIFont else {
+                isBoldEnabled = false
+                isItalicEnabled = false
+                isUnderlineEnabled = false
+                isStrikeThroughEnabled = false
+                return
+            }
+            
+            isBoldEnabled = font.fontDescriptor.symbolicTraits.contains(.traitBold)
+            isItalicEnabled = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
+            
+            if let underlineStyle = textStorage.attribute(.underlineStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
+                isUnderlineEnabled = underlineStyle != 0
+            } else {
+                isUnderlineEnabled = false
+            }
+            
+            if let strike = textStorage.attribute(.strikethroughStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
+                isStrikeThroughEnabled = strike != 0
+            } else {
+                isStrikeThroughEnabled = false
+            }
         } else {
-            isUnderlineEnabled = false
-        }
-        
-        if let strike = textStorage.attribute(.strikethroughStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
-            isStrikeThroughEnabled = strike != 0
-        } else {
-            isStrikeThroughEnabled = false
+            guard let font = typingAttributes[.font] as? UIFont else {
+                isBoldEnabled = false
+                isItalicEnabled = false
+                isUnderlineEnabled = false
+                isStrikeThroughEnabled = false
+                return
+            }
+            
+            isBoldEnabled = font.fontDescriptor.symbolicTraits.contains(.traitBold)
+            isItalicEnabled = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
+            
+            if let underlineStyle = typingAttributes[.underlineStyle] as? Int {
+                isUnderlineEnabled = underlineStyle != 0
+            } else {
+                isUnderlineEnabled = false
+            }
+            
+            if let strike = typingAttributes[.strikethroughStyle] as? Int {
+                isStrikeThroughEnabled = strike != 0
+            } else {
+                isStrikeThroughEnabled = false
+            }
+            
         }
     }
 }

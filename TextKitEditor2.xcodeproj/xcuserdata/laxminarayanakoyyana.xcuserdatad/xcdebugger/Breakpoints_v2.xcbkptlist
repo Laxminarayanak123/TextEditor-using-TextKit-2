@@ -30,8 +30,8 @@
             filePath = "TextKitEditor2/TextView/TextView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "137"
-            endingLineNumber = "137"
+            startingLineNumber = "140"
+            endingLineNumber = "140"
             landmarkName = "redoAction()"
             landmarkType = "7">
          </BreakpointContent>

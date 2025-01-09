@@ -120,23 +120,25 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
     @objc func undoAction() {
         if undoManager?.canUndo == true {
             print("Can undo")
+            let generator = UIImpactFeedbackGenerator(style: .heavy)
+            generator.impactOccurred()
         } else {
             print("Cannot undo")
         }
         undoManager?.undo()
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        
     }
     
     @objc func redoAction() {
         if undoManager?.canRedo == true {
             print("Can redo")
+            let generator = UIImpactFeedbackGenerator(style: .heavy)
+            generator.impactOccurred()
         } else {
             print("Cannot redo")
         }
         undoManager?.redo()
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        
     }
     
     
@@ -152,116 +154,6 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
 //    }
    
 
-    func toggleSelected(range : NSRange){
-        
-        if (selectedRange.location == textStorage.length && selectedRange.length == 0 ) || (selectedRange.upperBound == textStorage.length){
-            newLineAtLast(append: true, range : range, toggle: true)
-        }
-        
-        let paragraphRange = textStorage.mutableString.paragraphRange(for: range)
-        let paraString = textStorage.attributedSubstring(from: paragraphRange)
-        
-
-        if let _ = paraString.attribute(.listType, at: 0, effectiveRange: nil) as? String{
-            
-            textStorage.removeAttribute(.listType, range: paragraphRange)
-
-            leftIndentForListToggle(range: paragraphRange)
-        }
-        else{
-            if let _ = paragraphString.NumberedListIndex{
-                toggleNumberList(range: range)
-            }
-            textStorage.addAttribute(.listType, value: "checkList", range: paragraphRange)
-           
-            rightIndentForListToggle(range: paragraphRange)
-        }
-        
-        undoManager?.registerUndo(withTarget: self, handler: { _ in
-            self.toggleSelected(range: paragraphRange)
-        })
-        
-        undoManager?.setActionName("From Toggle")
-        
-        
-
-    }
-    
-    func toggleNumberList(range : NSRange){
-        if (selectedRange.location == textStorage.length && selectedRange.length == 0 ) || (selectedRange.upperBound == textStorage.length){
-            newLineAtLast(append: true, range : range, toggle: true)
-        }
-        
-        let paragraphRange = textStorage.mutableString.paragraphRange(for: range)
-        let paraString = textStorage.attributedSubstring(from: paragraphRange)
-        
-        if let _ = paraString.attribute(.listType, at: 0, effectiveRange: nil) as? Int{
-            // if it is already a numbered list
-            leftIndentForListToggle(range: paragraphRange)
-            textStorage.removeAttribute(.listType, range: paragraphRange)
-            
-            modifyList(currentRange: paragraphRange, updateSelf: false)
-        }
-        else{
-           // if it is not a numbered list
-            if paraString.containsListAttachment && paraString.NumberedListIndex == nil{
-                toggleSelected(range: range)
-            }
-            rightIndentForListToggle(range: paragraphRange)
-            
-            textStorage.addAttribute(.listType, value: 0, range: paragraphRange)
-            
-            modifyList(currentRange: paragraphRange, updateSelf: true)
-        }
-        
-        
-
-        
-        undoManager?.registerUndo(withTarget: self, handler: { _ in
-            self.toggleNumberList(range: paragraphRange)
-        })
-        
-        undoManager?.setActionName("From number Toggle")
-        
-    }
-    
-    func modifyList(currentRange: NSRange, updateSelf : Bool) {
-        
-        var firstBool : Bool = updateSelf
-        
-        var nextLocation = currentRange.upperBound
-        
-        if firstBool == true {
-            nextLocation = currentRange.lowerBound
-            firstBool = false
-        }
-
-        if nextLocation < textStorage.length {
-            let mutableAttributedText = NSMutableAttributedString(attributedString: attributedText)
-            let nextParagraphRange = mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: nextLocation, length: 0))
-            let nextString = textStorage.attributedSubstring(from: nextParagraphRange)
-            
-            if nextString.string.isEmpty{
-                return
-            }
-            
-            if nextString.containsListAttachment {
-                if let _ = nextString.NumberedListIndex {
-                    let newValue = getValue2(currentRange: nextParagraphRange, value: 0, mainString: nextString)
-                    if newValue == 1000{
-                        return
-                    }
-                    textStorage.addAttribute(.listType, value: newValue + 1, range: nextParagraphRange)
-                }
-                modifyList(currentRange: nextParagraphRange, updateSelf: firstBool)
-            }
-            else{
-                return
-            }
-        } else {
-            return
-        }
-    }
 
     
     @objc func toggleTap() {
