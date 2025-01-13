@@ -7,7 +7,7 @@
 
 import UIKit
 
-class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, UIGestureRecognizerDelegate{
+class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
     
     var textContentStorage : NSTextContentStorage!
         
@@ -44,6 +44,36 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
             updateStrikeButton()
         }
     }
+    
+    var checkListButton : UIButton?
+    var isCheckListEnabled : Bool = false{
+        didSet{
+            updateCheckListButton()
+        }
+    }
+    
+    var numberedListButton : UIButton?
+    var isNumberedListEnabled : Bool = false{
+        didSet{
+            updateNumberedListButton()
+        }
+    }
+    
+    var leftIndentButton : UIButton?
+    var leftIndentEnabled : Bool = false{
+        didSet{
+            updateLeftIndentButton()
+        }
+    }
+    
+    var rightIndentButton : UIButton?
+    var rightIndentEnabled : Bool = true{
+        didSet{
+            updaterightIndentButton()
+        }
+    }
+    
+    var returnRange : NSRange?
     
     override init(frame: CGRect, textContainer: NSTextContainer?) {
 
@@ -141,6 +171,12 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
         
     }
     
+    override func becomeFirstResponder() -> Bool {
+//        isKeyboardActive = true
+        isEditable = true
+        return super.becomeFirstResponder()
+    }
+    
     
 //    func setMyObjectTitle(_ newTitle: String) {
 //        let currentTitle = o1.title
@@ -166,59 +202,6 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate, U
 //            self.removeGestureRecognizer(tapGesture)
 //        }
     }
-                                
-    func checkListTapGesture(){
-        tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
-        
-        tapGesture.delegate = self
-    }
-    
-    @objc func handleTap(_ gesture : UITapGestureRecognizer){
-        let location = gesture.location(in: self)
-        print("location for gesture", location)
-        
-        // getting the closest UITextPosition
-        if let tapPosition = closestPosition(to: location),
-           let range = textRange(from: tapPosition, to: tapPosition){
-            
-            let loc = offset(from: beginningOfDocument, to: tapPosition)
-            let length = offset(from: range.start, to: range.end)
-            
-            let range = NSRange(location: loc, length: length)
-            
-            let nsTextRange = NSTextRange(range, contentManager: textLayoutManager!.textContentManager!)
-            
-            let paraRange = textStorage.mutableString.paragraphRange(for: range)
-            
-            if paraRange.length > 0{
-                let paraString = textStorage.attributedSubstring(from: paraRange)
-                
-                
-                
-                if let fragment = textLayoutManager?.textLayoutFragment(for: nsTextRange!.location){
-                    
-                    print("fragment.layoutFragmentFrame",fragment.layoutFragmentFrame)
-                    
-                    if let firstLineFragment = fragment.textLineFragments.first{
-                        let lineHeight = firstLineFragment.typographicBounds.height
-                        
-                        let fragX = fragment.layoutFragmentFrame.origin.x
-                        let fragY = fragment.layoutFragmentFrame.origin.y
-                        
-                        if(location.x <= fragX && location.x >= fragX - 42 && location.y >= fragY && location.y <= fragY + lineHeight){
-                            let generator = UIImpactFeedbackGenerator(style: .heavy)
-                            generator.impactOccurred()
-                        }
-                    }
-                    
-                    
-                }
-            }
-        }
-    }
-    
-   
-    
 
 }
 

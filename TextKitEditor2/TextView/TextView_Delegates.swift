@@ -12,21 +12,25 @@ extension TextView{
     func textViewDidChange(_ textView: UITextView) {
         
         // using values that are assigned in "shouldChangeTextIn", managing checkbox for previous paragraph and indent for current paragraph based on previous paragraph
-        if let previousParagraphRange = previousListParagraphRange{
+        if let returnRange = returnRange{
+            if let value = paragraphString.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
+                textStorage.addAttribute(.indentLevel, value: value, range: NSRange(location: returnRange.location, length: 1))
+            }
+            self.returnRange = nil
+        }
+        
+        if let previousParagraphRange = previousListParagraphRange {
 
             if let value = paragraphString.NumberedListIndex{
                 textStorage.addAttribute(.listType, value: value, range: NSRange(location: previousParagraphRange.location, length: 1))
-                textStorage.addAttribute(.indentLevel, value: paragraphString.indentLevel, range: NSRange(location: previousParagraphRange.location, length: 1))
             }
             else{
                 textStorage.addAttribute(.listType, value: "checkList", range: NSRange(location: previousParagraphRange.location, length: 1))
+                if let _ = textStorage.attribute(.checkListState, at: previousParagraphRange.location, effectiveRange: nil) as? Bool{
+                    textStorage.addAttribute(.checkListState, value: false, range: paragraphRange)
+                }
             }
 
-                if let value = paragraphString.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
-                    textStorage.addAttribute(.indentLevel, value: value, range: NSRange(location: previousParagraphRange.location, length: 1))
-                }
-
-            
             modifyList(currentRange: NSRange(location: previousParagraphRange.location, length: 0), updateSelf: true)
             self.previousListParagraphRange = nil
             
@@ -45,7 +49,9 @@ extension TextView{
                 return false
             }
             
-            // if the current paragraph is a checkbox and you are trying to return at the starting location of paragraph then create a checkbox above it
+            returnRange = paragraphRange
+            
+//             if the current paragraph is a checkbox and you are trying to return at the starting location of paragraph then create a checkbox above it
             if paragraphString.containsListAttachment{
 
                 previousListParagraphRange = paragraphRange
@@ -159,6 +165,7 @@ extension TextView{
             }
             
             selectedRange = NSRange(location: replaceRange.location, length: 0)
+            scrollRangeToVisible(selectedRange)
             
             let range = textStorage.mutableString.paragraphRange(for: NSRange(location: replaceRange.location, length: 0))
             modifyList(currentRange: range, updateSelf: true)
@@ -172,6 +179,7 @@ extension TextView{
             textStorage.replaceCharacters(in: wholeRange, with: originalText)
             
             selectedRange = replaceRange
+            scrollRangeToVisible(selectedRange)
             
             let firstParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: replaceRange.location, length: 0))
             modifyList(currentRange: firstParagraphRange, updateSelf: true)

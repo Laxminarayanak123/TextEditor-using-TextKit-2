@@ -6,6 +6,8 @@
 //
 import UIKit
 
-enum paragraphType{
-    case plainParagraph, checkList, NumberedList
+enum paragraphType : String{
+    case plainParagraph = ""
+    case checkList = "checkList"
+    case NumberedList = "0"
 }

@@ -84,9 +84,23 @@ extension TextView{
     func addBoldandItalicTraits(in range: NSRange, traits: UIFontDescriptor.SymbolicTraits) {
         undoManager?.beginUndoGrouping()
         let text = textStorage.attributedSubstring(from: range)
-        let startingFont = textStorage.attribute(.font, at: range.location, effectiveRange: nil) as! UIFont
-        let startingTraits = startingFont.fontDescriptor.symbolicTraits
-        let shouldAddTrait = !startingTraits.contains(traits)
+        
+        var shouldAddTrait : Bool = true
+        textStorage.enumerateAttribute(.font, in: range) { value, subRange, _ in
+            guard let currentFont = value as? UIFont else { return }
+            
+            // Get the current traits of the font
+            let currentTraits = currentFont.fontDescriptor.symbolicTraits
+            
+            if currentTraits.contains(traits){
+                shouldAddTrait = false
+                return
+            }
+        }
+        
+        //        let startingFont = textStorage.attribute(.font, at: range.location, effectiveRange: nil) as! UIFont
+        //        let startingTraits = startingFont.fontDescriptor.symbolicTraits
+        //        let shouldAddTrait = !startingTraits.contains(traits)
         
         // Enumerate through the text storage and update font traits
         textStorage.enumerateAttribute(.font, in: range) { (value, subrange, _) in
@@ -109,6 +123,8 @@ extension TextView{
         }
         
         selectedRange = range
+        scrollRangeToVisible(selectedRange)
+        
         updateHighlighting()
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.restoreBoldandItalic(range: range, text: text, traits: traits )
@@ -123,6 +139,8 @@ extension TextView{
         textStorage.replaceCharacters(in: range, with: text)
         
         selectedRange = range
+        scrollRangeToVisible(selectedRange)
+        
         updateHighlighting()
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.addBoldandItalicTraits(in: range, traits: traits)
@@ -136,21 +154,29 @@ extension TextView{
         undoManager?.beginUndoGrouping()
         // Check if the starting point of the selection has an underline
         let text = textStorage.attributedSubstring(from: range)
-        let startingUnderline = (textStorage.attribute(.underlineStyle, at: range.location, effectiveRange: nil) as? Int) ?? 0
-        let shouldAddUnderline = startingUnderline == 0 // Add underline if not present
+        //        let startingUnderline = (textStorage.attribute(.underlineStyle, at: range.location, effectiveRange: nil) as? Int) ?? 0
+        var shouldAddUnderline = true // Add underline if not present
         
-        // Enumerate through the text storage and update underline style
-        textStorage.enumerateAttribute(.underlineStyle, in: range) { (_, subrange, _) in
-            if shouldAddUnderline {
-                // Add underline
-                textStorage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: subrange)
-            } else {
-                // Remove underline
-                textStorage.removeAttribute(.underlineStyle, range: subrange)
-            }
+        textStorage.enumerateAttribute(.underlineStyle, in: range) { val, range, _ in
+            guard let _ = val else { return }
+            
+            shouldAddUnderline = false
         }
         
+        // Enumerate through the text storage and update underline style
+        
+        if shouldAddUnderline {
+            // Add underline
+            textStorage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        } else {
+            // Remove underline
+            textStorage.removeAttribute(.underlineStyle, range: range)
+        }
+        
+        
         selectedRange = range
+        scrollRangeToVisible(selectedRange)
+        
         updateHighlighting()
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.restoreUnderline(range: range, text: text)
@@ -165,6 +191,8 @@ extension TextView{
         textStorage.replaceCharacters(in: range, with: text)
         
         selectedRange = range
+        scrollRangeToVisible(selectedRange)
+        
         updateHighlighting()
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.modifyFontForUnderline(in: range)
@@ -179,19 +207,25 @@ extension TextView{
         let text = textStorage.attributedSubstring(from: range)
         
         // Check if the starting point of the selection has a strike-through
-        let startingStrikeThrough = (textStorage.attribute(.strikethroughStyle, at: range.location, effectiveRange: nil) as? Int) ?? 0
-        let shouldAddStrikeThrough = startingStrikeThrough == 0
+        //        let startingStrikeThrough = (textStorage.attribute(.strikethroughStyle, at: range.location, effectiveRange: nil) as? Int) ?? 0
+        var shouldAddStrikeThrough = true
+        
+        textStorage.enumerateAttribute(.strikethroughStyle, in: range) { val, range, _ in
+            guard let _ = val else { return }
+            
+            shouldAddStrikeThrough = false
+        }
         
         // Enumerate through the text storage and update strike-through style
-        textStorage.enumerateAttribute(.strikethroughStyle, in: range) { (_, subrange, _) in
-            if shouldAddStrikeThrough {
-                textStorage.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: subrange)
-            } else {
-                textStorage.removeAttribute(.strikethroughStyle, range: subrange)
-            }
+        if shouldAddStrikeThrough {
+            textStorage.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        } else {
+            textStorage.removeAttribute(.strikethroughStyle, range: range)
         }
         
         selectedRange = range
+        scrollRangeToVisible(selectedRange)
+        
         updateHighlighting()
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.restoreStrikeThrough(range: range, text: text)
@@ -206,6 +240,8 @@ extension TextView{
         textStorage.replaceCharacters(in: range, with: text)
         
         selectedRange = range
+        scrollRangeToVisible(selectedRange)
+        
         updateHighlighting()
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.modifyStrikeThrough(in: range)
@@ -215,28 +251,45 @@ extension TextView{
     }
     
     func updateHighlighting(){
+        isBoldEnabled = false
+        isItalicEnabled = false
+        isUnderlineEnabled = false
+        isStrikeThroughEnabled = false
+        isCheckListEnabled = false
+        isNumberedListEnabled = false
+        leftIndentEnabled = false
+        rightIndentEnabled = false
+        
         if selectedRange.length > 0 {
-            guard let font = textStorage.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? UIFont else {
-                isBoldEnabled = false
-                isItalicEnabled = false
-                isUnderlineEnabled = false
-                isStrikeThroughEnabled = false
-                return
-            }
             
-            isBoldEnabled = font.fontDescriptor.symbolicTraits.contains(.traitBold)
-            isItalicEnabled = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
+            isCheckListEnabled = containsListType(range: selectedRange, paragraphType: .checkList, paragraphRanges: nil)
+            isNumberedListEnabled = containsListType(range: selectedRange, paragraphType: .NumberedList, paragraphRanges: nil)
+            leftIndentEnabled = canIndent(range: selectedRange, left: true, right: false)
+            rightIndentEnabled = canIndent(range: selectedRange, left: false, right: true)
             
-            if let underlineStyle = textStorage.attribute(.underlineStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
-                isUnderlineEnabled = underlineStyle != 0
-            } else {
-                isUnderlineEnabled = false
-            }
-            
-            if let strike = textStorage.attribute(.strikethroughStyle, at: selectedRange.location, effectiveRange: nil) as? Int {
-                isStrikeThroughEnabled = strike != 0
-            } else {
-                isStrikeThroughEnabled = false
+            textStorage.enumerateAttributes(in: selectedRange, options: []) { attributes, range, _ in
+                if let font = attributes[.font] as? UIFont {
+                    let traits = font.fontDescriptor.symbolicTraits
+                    if traits.contains(.traitBold) {
+                        isBoldEnabled = true
+                    }
+                    if traits.contains(.traitItalic) {
+                        isItalicEnabled = true
+                    }
+                }
+                
+                if let underlineStyle = attributes[.underlineStyle] as? Int, underlineStyle != 0 {
+                    isUnderlineEnabled = true
+                }
+                
+                if let strikeStyle = attributes[.strikethroughStyle] as? Int, strikeStyle != 0 {
+                    isStrikeThroughEnabled = true
+                }
+                
+                // Exit early if all styles are enabled
+                if isBoldEnabled && isItalicEnabled && isUnderlineEnabled && isStrikeThroughEnabled {
+                    return
+                }
             }
         } else {
             guard let font = typingAttributes[.font] as? UIFont else {
@@ -246,6 +299,8 @@ extension TextView{
                 isStrikeThroughEnabled = false
                 return
             }
+            leftIndentEnabled = false
+            rightIndentEnabled = true
             
             isBoldEnabled = font.fontDescriptor.symbolicTraits.contains(.traitBold)
             isItalicEnabled = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
@@ -262,6 +317,40 @@ extension TextView{
                 isStrikeThroughEnabled = false
             }
             
+            if selectedRange.location < textStorage.length {
+                var minLevel = 0
+                if let listType = textStorage.attribute(.listType, at: selectedRange.location, effectiveRange: nil){
+                    minLevel = 1
+                    if let _ = listType as? Int{
+                        isNumberedListEnabled = true
+                        isCheckListEnabled = false
+                    }
+                    else{
+                        isCheckListEnabled = true
+                        isNumberedListEnabled = false
+                    }
+                }
+                else{
+                    isCheckListEnabled = false
+                    isNumberedListEnabled = false
+                }
+                
+                if let indent = textStorage.attribute(.indentLevel, at: selectedRange.location, effectiveRange: nil) as? Int {
+                    if indent > minLevel {
+                        leftIndentEnabled = true
+                    } else {
+                        leftIndentEnabled = false
+                    }
+                    
+                    if indent < 4 {
+                        rightIndentEnabled = true
+                    } else {
+                        rightIndentEnabled = false
+                    }
+                }
+            }
         }
     }
+    
+    
 }

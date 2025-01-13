@@ -23,7 +23,7 @@ extension TextView {
 
         //
 //        if (firstParagraphRange.location != lastParagraphRange.location) && (firstParagraphRange.upperBound != lastParagraphRange.upperBound){
-            handleListForRange(range: paragraphRange, ListType: "checkList", isString: true)
+        handleListForRange(range: paragraphRange, paragraphType: .checkList)
             
 //            return
 //        }
@@ -46,6 +46,11 @@ extension TextView {
 //           
 //            rightIndentForListToggle(range: paragraphRange)
 //        }
+        updateHighlighting()
+        if undoManager!.isUndoing || undoManager!.isRedoing{
+            selectedRange = paragraphRange
+            scrollRangeToVisible(selectedRange)
+        }
         
         undoManager?.registerUndo(withTarget: self, handler: { _ in
 //            self.toggleSelected(range: paragraphRange)
@@ -68,7 +73,7 @@ extension TextView {
         let paragraphRange = textStorage.mutableString.paragraphRange(for: range)
         let paraString = textStorage.attributedSubstring(from: paragraphRange)
         
-        handleListForRange(range: paragraphRange, ListType: "", isString: false)
+        handleListForRange(range: paragraphRange, paragraphType: .NumberedList)
         
 //        if let _ = paraString.attribute(.listType, at: 0, effectiveRange: nil) as? Int{
 //            // if it is already a numbered list
@@ -94,6 +99,13 @@ extension TextView {
         
         modifyList(currentRange: firstParagraphRange, updateSelf: false)
         
+        if undoManager!.isUndoing || undoManager!.isRedoing{
+            selectedRange = paragraphRange
+            scrollRangeToVisible(selectedRange)
+        }
+        
+        updateHighlighting()
+
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.undoToggleNumberList(range: paragraphRange, text: paraString)
         })
@@ -140,7 +152,7 @@ extension TextView {
         }
     }
     
-    func paragraphRanges(for attributedString: NSAttributedString, in range: NSRange) -> [NSRange] {
+    func getParagraphRanges(for attributedString: NSAttributedString, in range: NSRange) -> [NSRange] {
         var ranges: [NSRange] = []
 //        let string = attributedString.string as NSString
 
@@ -168,6 +180,12 @@ extension TextView {
         
         modifyList(currentRange: firstParagraphRange, updateSelf: true)
         
+        if undoManager!.isUndoing || undoManager!.isRedoing{
+            selectedRange = range
+            scrollRangeToVisible(selectedRange)
+        }
+        updateHighlighting()
+        
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.toggleSelected(range: range)
         })
@@ -184,6 +202,12 @@ extension TextView {
         
         modifyList(currentRange: firstParagraphRange, updateSelf: true)
         
+        if undoManager!.isUndoing || undoManager!.isRedoing{
+            selectedRange = range
+            scrollRangeToVisible(selectedRange)
+        }
+        updateHighlighting()
+
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.toggleNumberList(range: range)
         })
@@ -191,52 +215,42 @@ extension TextView {
         undoManager?.endUndoGrouping()
     }
     
-    func handleListForRange(range: NSRange, ListType: String, isString : Bool) {
+    func handleListForRange(range: NSRange, paragraphType : paragraphType) {
         
         let string = textStorage.attributedSubstring(from: range)
         
-        let paragraphRanges = paragraphRanges(for: string, in: range)
+        let paragraphRanges = getParagraphRanges(for: string, in: range)
         
-        var containsListType : Bool = false
-        
-        for range in paragraphRanges{
-            if isString {
-                if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? String {
-                    containsListType = true
-                }
-            } else {
-                if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? Int {
-                    containsListType = true
-                }
-            }
-        }
+        var containsListType = containsListType(range: range, paragraphType: paragraphType, paragraphRanges: paragraphRanges)
         
         if containsListType{
             for range in paragraphRanges{
-                if isString {
-                    if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? String {
-                        textStorage.removeAttribute(.listType, range: range)
-                        leftIndentForListToggle(range: range)
-                    }
-                } else {
+                if paragraphType == .NumberedList{
                     if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? Int {
                         textStorage.removeAttribute(.listType, range: range)
                         leftIndentForListToggle(range: range)
                     }
                 }
+                else{
+                    if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? String {
+                        textStorage.removeAttribute(.listType, range: range)
+                        textStorage.removeAttribute(.checkListState, range: range)
+                        leftIndentForListToggle(range: range)
+                    }
+                }
+                
             }
         }
         else{
             for range in paragraphRanges{
-                if isString{
+                if paragraphType == .NumberedList{
                     if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil){
                         
                     }
                     else{
                         rightIndentForListToggle(range: range)
                     }
-                    textStorage.addAttribute(.listType, value: ListType, range: range)
-                    
+                    textStorage.addAttribute(.listType, value: 0, range: range)
                 }
                 else{
                     if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil){
@@ -245,7 +259,8 @@ extension TextView {
                     else{
                         rightIndentForListToggle(range: range)
                     }
-                    textStorage.addAttribute(.listType, value: 0, range: range)
+                    textStorage.addAttribute(.listType, value: paragraphType.rawValue, range: range)
+                    textStorage.addAttribute(.checkListState, value: false, range: range)
                 }
             }
         }
@@ -256,5 +271,32 @@ extension TextView {
         
  
         
+    }
+    
+    func containsListType(range : NSRange, paragraphType : paragraphType, paragraphRanges : [NSRange]?) -> Bool {
+        
+        var ranges : [NSRange] = []
+        
+        if let pr = paragraphRanges{
+            ranges = pr
+        }
+        else{
+            ranges = getParagraphRanges(for: textStorage.attributedSubstring(from: range), in: range)
+        }
+        
+        for range in ranges{
+            if paragraphType == .NumberedList {
+                if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? Int {
+                    return true
+                }
+                
+            } else {
+                if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? String {
+                    return true
+                }
+            }
+        }
+        
+        return false
     }
 }

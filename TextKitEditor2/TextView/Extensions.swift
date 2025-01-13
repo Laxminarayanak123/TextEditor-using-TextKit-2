@@ -8,8 +8,9 @@
 import UIKit
 
 extension NSAttributedString.Key{
-    static let listType = NSAttributedString.Key("CustomCase")
+    static let listType = NSAttributedString.Key("ListType")
     static let indentLevel = NSAttributedString.Key("IndentLevel")
+    static let checkListState = NSAttributedString.Key("CheckListState")
 }
 
 
@@ -76,5 +77,11 @@ extension NSAttributedString {
             }
         }
         return .plainParagraph
+    }
+}
+
+extension NSRange {
+    func isSafeRange( length: Int) -> Bool {
+        return self.location >= 0 && self.location + self.length <= length
     }
 }

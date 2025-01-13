@@ -8,8 +8,20 @@ import UIKit
 
 
 class CheckboxTextLayoutFragment: NSTextLayoutFragment {
-    private let checkboxSize: CGSize = CGSize(width: 20, height: 20)
+    private let checkboxSize: CGSize = CGSize(width: 24, height: 24)
     private let checkboxPadding: CGFloat = 5
+    var isChecked: Bool = false
+//    var offset: CGFloat = 0
+//    
+//    init(textElement: NSTextElement, range: NSTextRange, container: NSTextContainer, offset: CGFloat) {
+//        self.offset = offset
+//        super.init(textElement: textElement, range: range)
+//    }
+//    
+//    // Required initializer (if applicable)
+//    required init(coder: NSCoder) {
+//        fatalError("init(coder:) has not been implemented")
+//    }
     
     override var renderingSurfaceBounds: CGRect{
         let bounds = super.renderingSurfaceBounds
@@ -20,48 +32,58 @@ class CheckboxTextLayoutFragment: NSTextLayoutFragment {
     }
     
     override func draw(at point: CGPoint, in context: CGContext) {
-        
-//        context.saveGState()
-//        context.setFillColor(UIColor.blue.cgColor)
-//        context.fill(renderingSurfaceBounds)
-//        context.restoreGState()
-
         let firstLineFragment = self.textLineFragments.first!
         
         // Draw checkbox
         let checkboxRect = CGRect(
-            x: renderingSurfaceBounds.origin.x,
-            y: point.y + (checkboxSize.height)/2,
+            x: renderingSurfaceBounds.origin.x + 5,
+            y:renderingSurfaceBounds.minY + 5,
             width: checkboxSize.width,
             height: checkboxSize.height
         )
 
-//        let checkboxImage = UIImage(systemName: "square") // Use "checkmark.square" for checked
+//        context.saveGState()
+//        context.setFillColor(UIColor.red.cgColor)
+//        context.fill(checkboxRect)
+//        
+//        context.restoreGState()
+        
         
         context.saveGState()
-
-//        context.setFillColor(UIColor.green.cgColor)
-//        let fragmentFrame = CGRect(origin: point, size: self.layoutFragmentFrame.size)
-//        context.fill(fragmentFrame)
-        
-        context.setFillColor(UIColor.red.cgColor)
-        context.fill(checkboxRect)
-        
+        context.setStrokeColor(UIColor.label.cgColor)
+        context.setLineWidth(2)
+        context.stroke(checkboxRect)
         context.restoreGState()
         
-//        checkboxImage?.draw(in: checkboxRect)
-
+        if isChecked {
+            let checkmarkPath = UIBezierPath()
+            let checkmarkStart = CGPoint(
+                x: checkboxRect.origin.x + 4,
+                y: checkboxRect.midY
+            )
+            let checkmarkMiddle = CGPoint(
+                x: checkboxRect.midX - 2,
+                y: checkboxRect.maxY - 4
+            )
+            let checkmarkEnd = CGPoint(
+                x: checkboxRect.maxX - 4,
+                y: checkboxRect.minY + 4
+            )
+            
+            checkmarkPath.move(to: checkmarkStart)
+            checkmarkPath.addLine(to: checkmarkMiddle)
+            checkmarkPath.addLine(to: checkmarkEnd)
+            
+            context.saveGState()
+            context.setStrokeColor(UIColor.label.cgColor)
+            context.setLineWidth(5.0)
+            context.addPath(checkmarkPath.cgPath)
+            context.strokePath()
+            context.restoreGState()
+        }
         
         super.draw(at: point, in: context)
 
-        
-
-        // Offset the rest of the text to account for checkbox
-//        let textDrawingPoint = CGPoint(x: point.x + checkboxSize.width + checkboxPadding, y: point.y)
-//        context.saveGState()
-//        context.translateBy(x: textDrawingPoint.x, y: textDrawingPoint.y)
-//        super.draw(at: .zero, in: context)
-//        context.restoreGState()
     }
 }
 

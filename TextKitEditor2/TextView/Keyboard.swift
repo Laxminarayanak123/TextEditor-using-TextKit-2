@@ -37,8 +37,6 @@ extension TextView{
         contentInset.bottom = .zero
     }
     
-
-    
     func createToolbar() -> UIView {
         let containerView = UIView()
         containerView.backgroundColor = .systemGray5
@@ -60,14 +58,14 @@ extension TextView{
         // Create a stack view to hold the toolbar buttons
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.spacing = 40
+        stackView.spacing = 5
         stackView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(stackView)
         
         // Pin the stack view to the scroll view
         NSLayoutConstraint.activate([
-            stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -20),
+            stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 5),
+            stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -10),
             stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
@@ -100,22 +98,33 @@ extension TextView{
                 for: .normal
             )
             button.addTarget(self, action: action, for: .touchUpInside)
+            
+            // Set the button's background to a square shape
+            button.backgroundColor = .systemGray5 // Set your desired background color
+            button.layer.cornerRadius = 3 // Adjust for square corners (set to a smaller value for rounded squares)
+            button.clipsToBounds = true
+
+            // Set a fixed size for the button to ensure square dimensions
+            button.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                button.widthAnchor.constraint(equalToConstant: 70),
+                button.heightAnchor.constraint(equalToConstant: 20)
+            ])
+            
             stackView.addArrangedSubview(button)
             
-            if iconName == "bold" {
-                boldButton = button
-            }
-            
-            if iconName == "italic" {
-                italicButton = button
-            }
-            
-            if iconName == "underline" {
-                underlineButton = button
-            }
-            
-            if iconName == "strikethrough" {
-                strikeThroughButton = button
+            // Reference specific buttons for additional functionality
+            switch iconName{
+                case  "bold" : boldButton = button
+                case  "italic" : italicButton = button
+                case  "underline" : underlineButton = button
+                case  "strikethrough" : strikeThroughButton = button
+                case  "checkmark.circle" : checkListButton = button
+                case  "list.number" : numberedListButton = button
+                case "text.alignright" : rightIndentButton = button
+                case "text.alignleft" : leftIndentButton = button
+                default:
+                    break
             }
         }
         
@@ -125,21 +134,43 @@ extension TextView{
         return containerView
     }
     
+    
     func updateButton(for button: UIButton, isEnabled: Bool, iconName: String) {
-        let activeColor = UIColor.systemGreen
+        let activeColor = UIColor.white
         let inactiveColor = UIColor.label
+        let activeBackgroundColor = UIColor.systemGray
+        let inactiveBackgroundColor = UIColor.systemGray5
         
-        // Update the button's image
+        // Update the button's image with the appropriate tint color
         let configuration = UIImage.SymbolConfiguration(pointSize: 21, weight: .semibold)
-        let newImage = UIImage(systemName: iconName, withConfiguration: configuration)?
-            .withTintColor(isEnabled ? activeColor : inactiveColor, renderingMode: .alwaysOriginal)
+        if let newImage = UIImage(systemName: iconName, withConfiguration: configuration)?
+            .withTintColor(isEnabled ? activeColor : inactiveColor, renderingMode: .alwaysOriginal) {
+            button.setImage(newImage, for: .normal)
+        }
         
-        // Resize the button
-        button.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
-        button.setImage(newImage, for: .normal)
+        // Update the button's background color
+        button.backgroundColor = isEnabled ? activeBackgroundColor : inactiveBackgroundColor
         
-        // Set the background color
-//        button.backgroundColor = isEnabled ? activeColor : inactiveColor
+        button.layer.cornerRadius = 3
+        button.clipsToBounds = true
+    }
+    
+    func updateIndentButton(for button: UIButton, isEnabled: Bool, iconName: String) {
+        
+        let configuration = UIImage.SymbolConfiguration(pointSize: 21, weight: .semibold)
+        if let newImage = UIImage(systemName: iconName, withConfiguration: configuration)?
+            .withTintColor(.label, renderingMode: .alwaysOriginal) {
+            button.setImage(newImage, for: .normal)
+        }
+        button.alpha =  isEnabled ? 1.0 : 0.2
+    }
+    
+    func updateLeftIndentButton() {
+        updateIndentButton(for: leftIndentButton!, isEnabled: leftIndentEnabled, iconName: "text.alignleft")
+    }
+    
+    func updaterightIndentButton() {
+        updateIndentButton(for: rightIndentButton!, isEnabled: rightIndentEnabled, iconName: "text.alignright")
     }
 
     func updateBoldButton() {
@@ -156,6 +187,14 @@ extension TextView{
 
     func updateStrikeButton() {
         updateButton(for: strikeThroughButton!, isEnabled: isStrikeThroughEnabled, iconName: "strikethrough")
+    }
+    
+    func updateCheckListButton(){
+        updateButton(for: checkListButton!, isEnabled: isCheckListEnabled, iconName: "checkmark.circle")
+    }
+    
+    func updateNumberedListButton(){
+        updateButton(for: numberedListButton!, isEnabled: isNumberedListEnabled, iconName: "list.number")
     }
     
 }

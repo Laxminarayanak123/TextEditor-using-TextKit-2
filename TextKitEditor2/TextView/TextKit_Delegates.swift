@@ -27,6 +27,11 @@ extension TextView : NSTextLayoutManagerDelegate{
                     return fragment
                 }
                 let fragment = CheckboxTextLayoutFragment(textElement: textElement, range: textElement.elementRange!)
+                if let state = attrString.attribute(.checkListState, at: 0, effectiveRange: nil) as? Bool {
+                    fragment.isChecked = state
+                }
+                
+                
                 return fragment
                 
             }
@@ -87,6 +92,10 @@ extension TextView : NSTextStorageDelegate{
             
             if let indentValue = attributes[.indentLevel]{
                 textStorage.addAttribute(.indentLevel, value: indentValue, range: paragraphRange)
+            }
+            
+            if let checkBoxState = attributes[.checkListState]{
+                textStorage.addAttribute(.checkListState, value: checkBoxState, range: paragraphRange)
             }
         }
 
