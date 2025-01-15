@@ -8,11 +8,10 @@ import UIKit
 
 
 class CheckboxTextLayoutFragment: NSTextLayoutFragment {
-    private let checkboxSize: CGSize = CGSize(width: 24, height: 24)
-    private let checkboxPadding: CGFloat = 5
+    let checkboxSize: CGSize = CGSize(width: 24, height: 24)
+    let checkBoxStrokeWidth : CGFloat = 2
     var isChecked: Bool = false
-//    var offset: CGFloat = 0
-//    
+    
 //    init(textElement: NSTextElement, range: NSTextRange, container: NSTextContainer, offset: CGFloat) {
 //        self.offset = offset
 //        super.init(textElement: textElement, range: range)
@@ -23,35 +22,29 @@ class CheckboxTextLayoutFragment: NSTextLayoutFragment {
 //        fatalError("init(coder:) has not been implemented")
 //    }
     
+    
+    // increasing renderigSurfaceBounds bounds to draw checkbox
     override var renderingSurfaceBounds: CGRect{
         let bounds = super.renderingSurfaceBounds
         
-        let rect = CGRect(origin: .init(x: -42, y: bounds.origin.y), size: .init(width: bounds.size.width + 42, height: bounds.size.height))
+        let rect = CGRect(origin: .init(x: -54, y: bounds.origin.y), size: .init(width: bounds.size.width + 54, height: bounds.size.height))
         
         return rect
     }
     
     override func draw(at point: CGPoint, in context: CGContext) {
-        let firstLineFragment = self.textLineFragments.first!
         
         // Draw checkbox
         let checkboxRect = CGRect(
-            x: renderingSurfaceBounds.origin.x + 5,
-            y:renderingSurfaceBounds.minY + 5,
+            x: renderingSurfaceBounds.origin.x + 13,
+            y:renderingSurfaceBounds.minY + 5 + (24 * 0.2),
             width: checkboxSize.width,
             height: checkboxSize.height
         )
-
-//        context.saveGState()
-//        context.setFillColor(UIColor.red.cgColor)
-//        context.fill(checkboxRect)
-//        
-//        context.restoreGState()
-        
         
         context.saveGState()
         context.setStrokeColor(UIColor.label.cgColor)
-        context.setLineWidth(2)
+        context.setLineWidth(checkBoxStrokeWidth)
         context.stroke(checkboxRect)
         context.restoreGState()
         

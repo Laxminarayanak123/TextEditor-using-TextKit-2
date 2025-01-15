@@ -21,9 +21,6 @@ extension TextView{
             indents.append((oldValue,newIndentValue, range, minLevel))
         }
         
-//        undoManager?.beginUndoGrouping()
-        
-        
         if canIndent(range: paragraphRange, left: true, right: false) {
             undoManager?.registerUndo(withTarget: self, handler: { _ in
                 self.undoIndent(left: true, text: text, range: paragraphRange)
@@ -35,11 +32,41 @@ extension TextView{
            
         }
         
+        let firstParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 0))
+        modifyList(currentRange: firstParagraphRange, updateSelf: true)
         
+        if undoManager!.isUndoing || undoManager!.isRedoing{
+            selectedRange = range
+            scrollRangeToVisible(selectedRange)
+        }
+        updateHighlighting()
+    }
         
-//        undoManager?.endUndoGrouping()
+     func rightIndent(range : NSRange) {
+        let paragraphRange = textStorage.mutableString.paragraphRange(for: range)
+        let text = textStorage.attributedSubstring(from: paragraphRange)
         
+        let maxLevel = 4
+        var indents: [(oldValue : Int, newIndent: Int, range: NSRange)] = []
+        textStorage.enumerateAttributes(in: range) { attributes, range, _ in
+            let str = textStorage.attributedSubstring(from: range)
+            
+            let oldValue = str.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int ?? 0
+            let newIndentValue = min(maxLevel, oldValue + 1)
+            indents.append((oldValue,newIndentValue, range))
+        }
         
+        if canIndent(range: paragraphRange, left: false, right: true) {
+            undoManager?.registerUndo(withTarget: self, handler: { _ in
+                self.undoIndent(left: false, text: text, range: paragraphRange)
+            })
+        }
+
+        for indent in indents {
+            textStorage.addAttribute(.indentLevel, value: indent.newIndent, range: indent.range)
+            
+        }
+                
         let firstParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 0))
         modifyList(currentRange: firstParagraphRange, updateSelf: true)
         
@@ -55,6 +82,7 @@ extension TextView{
         selectedRange = range
         scrollRangeToVisible(selectedRange)
         updateHighlighting()
+        modifyList(currentRange: range, updateSelf: true)
         undoManager?.registerUndo(withTarget: self, handler: { _ in
             if left {
                 self.leftIndent(range: range)
@@ -64,54 +92,16 @@ extension TextView{
         })
     }
     
-        
-    @objc func rightIndent(range : NSRange) {
-        let paragraphRange = textStorage.mutableString.paragraphRange(for: range)
-        let text = textStorage.attributedSubstring(from: paragraphRange)
-        
-        let maxLevel = 4
-        var indents: [(oldValue : Int, newIndent: Int, range: NSRange)] = []
-        textStorage.enumerateAttributes(in: range) { attributes, range, _ in
-            let str = textStorage.attributedSubstring(from: range)
-            
-            let oldValue = str.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int ?? 0
-            let newIndentValue = min(maxLevel, oldValue + 1)
-            indents.append((oldValue,newIndentValue, range))
-        }
-        
-//        undoManager?.beginUndoGrouping()
-        if canIndent(range: paragraphRange, left: false, right: true) {
-            undoManager?.registerUndo(withTarget: self, handler: { _ in
-                self.undoIndent(left: false, text: text, range: paragraphRange)
-            })
-        }
-
-        for indent in indents {
-            textStorage.addAttribute(.indentLevel, value: indent.newIndent, range: indent.range)
-            
-        }
-        
-        
-//        undoManager?.endUndoGrouping()
-        let firstParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 0))
-        modifyList(currentRange: firstParagraphRange, updateSelf: true)
-        
-        if undoManager!.isUndoing || undoManager!.isRedoing{
-            selectedRange = range
-            scrollRangeToVisible(selectedRange)
-        }
-        updateHighlighting()
-    }
-    
+    // indents for toggling lists
+    // here these are used for toggling lists, But the undo for indent is not registered.
     func leftIndentForListToggle(range : NSRange) {
-        var indents: [(oldValue : Int, newIndent: Int, range: NSRange)] = []
+        var indents: [(newIndent: Int, range: NSRange)] = []
         textStorage.enumerateAttributes(in: range) { attributes, range, _ in
             
             let str = textStorage.attributedSubstring(from: range)
-            let minLevel = str.containsListAttachment ? 0 : 0
-            let oldValue = str.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int ?? minLevel
-            let newIndentValue = max(minLevel, oldValue - 1)
-            indents.append((oldValue,newIndentValue, range))
+            let oldValue = str.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int ?? 0
+            let newIndentValue = oldValue - 1
+            indents.append((newIndentValue, range))
         }
         
         for indent in indents {
@@ -123,43 +113,19 @@ extension TextView{
     
      func rightIndentForListToggle(range : NSRange) {
         let maxLevel = 4
-        var indents: [(oldValue : Int, newIndent: Int, range: NSRange)] = []
+        var indents: [(newIndent: Int, range: NSRange)] = []
         textStorage.enumerateAttributes(in: range) { attributes, range, _ in
             let str = textStorage.attributedSubstring(from: range)
-            
             let oldValue = str.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int ?? 0
             let newIndentValue = min(maxLevel, oldValue + 1)
-            indents.append((oldValue,newIndentValue, range))
+            indents.append((newIndentValue, range))
         }
         
-
-
         for indent in indents {
             textStorage.addAttribute(.indentLevel, value: indent.newIndent, range: indent.range)
         }
-        
     }
 
-    func newLineAtLast(append : Bool, range : NSRange, toggle : Bool){
-        undoManager?.beginUndoGrouping()
-        
-        if append{
-            textStorage.insert(NSAttributedString(string: "\n",attributes: typingAttributes), at: range.upperBound)
-            if !toggle{
-                selectedRange.location = range.location + 1
-            }
-        }
-        else{
-            textStorage.deleteCharacters(in: NSRange(location: range.upperBound, length: 1))
-        }
-        
-        undoManager?.registerUndo(withTarget: self, handler: { target in
-            self.newLineAtLast(append: !append, range: range,toggle: toggle)
-        })
-        
-        undoManager?.endUndoGrouping()
-    }
-    
     func canIndent(range: NSRange,left: Bool, right: Bool) -> Bool {
         let paragraphRanges = getParagraphRanges(for: textStorage.attributedSubstring(from: range), in: range)
         

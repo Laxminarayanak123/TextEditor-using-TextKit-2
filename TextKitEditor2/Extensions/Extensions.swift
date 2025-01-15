@@ -35,6 +35,14 @@ extension UITextView{
             return mutableAttributedText.mutableString.paragraphRange(for: NSRange(location: paragraphRange.location, length: 0))
         }
     }
+    
+    func getParagraphRange(range : NSRange) -> NSRange {
+        return textStorage.mutableString.paragraphRange(for: range)
+    }
+    
+    func getParagraphString(range: NSRange) -> NSAttributedString {
+        return textStorage.attributedSubstring(from: range)
+    }
 }
 
 
@@ -83,5 +91,23 @@ extension NSAttributedString {
 extension NSRange {
     func isSafeRange( length: Int) -> Bool {
         return self.location >= 0 && self.location + self.length <= length
+    }
+}
+
+extension NSRange {
+    init(_ textrange: NSTextRange, contentManager: NSTextContentManager){
+        let loc = contentManager.offset(from: contentManager.documentRange.location, to: textrange.location)
+        let length = contentManager.offset(from: textrange.location, to: textrange.endLocation)
+        self.init(location: loc, length: length)
+    }
+}
+
+
+extension NSTextRange{
+    convenience init?(_ range: NSRange, contentManager: NSTextContentManager){
+        let location = contentManager.location(contentManager.documentRange.location, offsetBy: range.location)
+        let end = contentManager.location(location!, offsetBy: range.length)
+        
+        self.init(location: location!, end: end)
     }
 }

@@ -18,59 +18,54 @@ extension TextView : UIGestureRecognizerDelegate {
     
     @objc func handleTap(_ gesture : UITapGestureRecognizer){
         let location = gesture.location(in: self)
-//        print("location for gesture", location)
+        
+        // getting the paragraphRange of the checkbox that is tapped
         if let tapPosition = closestPosition(to: location),
-           let range = textRange(from: tapPosition, to: tapPosition){
+           let textRange = textRange(from: tapPosition, to: tapPosition){
             
             let loc = offset(from: beginningOfDocument, to: tapPosition)
-            let length = offset(from: range.start, to: range.end)
+            let length = offset(from: textRange.start, to: textRange.end)
             
             let range = NSRange(location: loc, length: length)
-            let paraRange = textStorage.mutableString.paragraphRange(for: range)
-            // getting the closest UITextPosition
-            let didTapOnTheCheckbox = checkIfTappedOnCheckbox(location: location)
-            if didTapOnTheCheckbox {
-                toggleCheckBoxState(paraRange: paraRange)
-                return
-            }
+            let paragraphRange = getParagraphRange(range: range)
             
-            let _ = becomeFirstResponder()
-//            selectedRange = range
+            toggleCheckBoxState(paragraphRange: paragraphRange)
+            
+            return
         }
     }
     
     func checkIfTappedOnCheckbox(location: CGPoint) -> Bool {
         if let tapPosition = closestPosition(to: location),
-           let range = textRange(from: tapPosition, to: tapPosition){
+           let textRange = textRange(from: tapPosition, to: tapPosition){
             
             let loc = offset(from: beginningOfDocument, to: tapPosition)
-            let length = offset(from: range.start, to: range.end)
+            let length = offset(from: textRange.start, to: textRange.end)
             
             let range = NSRange(location: loc, length: length)
             
             let nsTextRange = NSTextRange(range, contentManager: textLayoutManager!.textContentManager!)
             
-            let paraRange = textStorage.mutableString.paragraphRange(for: range)
+            let paragraphRange = getParagraphRange(range: range)
             
-            if paraRange.length > 0{
-                let paraString = textStorage.attributedSubstring(from: paraRange)
-
+            if paragraphRange.length > 0{
+                let paragraphString = getParagraphString(range: paragraphRange)
+                
                 if let fragment = textLayoutManager?.textLayoutFragment(for: nsTextRange!.location){
-                    
-                    print("fragment.layoutFragmentFrame",fragment.layoutFragmentFrame)
                     
                     if let firstLineFragment = fragment.textLineFragments.first{
                         let lineHeight = firstLineFragment.typographicBounds.height
                         
                         let fragX = fragment.layoutFragmentFrame.origin.x
                         let fragY = fragment.layoutFragmentFrame.origin.y
+                        let isInXBounds = location.x <= fragX  && location.x >= fragX + fragment.renderingSurfaceBounds.origin.x
+                        // (24 * 0.2) for paragraph spacing
+                        let isInYBounds = location.y >= fragY && location.y <= fragY + lineHeight + (24 * 0.2)
                         
-                        if(location.x <= fragX && location.x >= fragX - 42 - 10 && location.y >= fragY && location.y <= fragY + lineHeight), paraString.paragraphType == .checkList {
+                        if(isInXBounds && isInYBounds), paragraphString.paragraphType == .checkList {
                             return true
                         }
                     }
-                    
-                    
                 }
             }
         }
@@ -83,7 +78,7 @@ extension TextView : UIGestureRecognizerDelegate {
         if let gesture = gestureRecognizer as? UITapGestureRecognizer,
            gesture.name == "checkbox" {
             let location = gesture.location(in: gesture.view)
-
+            
             let shouldBegin = checkIfTappedOnCheckbox(location: location)
             
             return shouldBegin
@@ -95,28 +90,39 @@ extension TextView : UIGestureRecognizerDelegate {
         if let gesture = gestureRecognizer as? UITapGestureRecognizer,
            gesture.name == "checkbox" {
             let location = gesture.location(in: gesture.view)
-
+            
             return checkIfTappedOnCheckbox(location: location)
         }
         
         return false
     }
     
-    func toggleCheckBoxState(paraRange : NSRange){
-        if let state = textStorage.attribute(.checkListState, at: paraRange.location, effectiveRange: nil) as? Bool {
-            textStorage.addAttribute(.checkListState, value: !state, range: paraRange)
+    func toggleCheckBoxState(paragraphRange : NSRange){
+        if let state = textStorage.attribute(.checkListState, at: paragraphRange.location, effectiveRange: nil) as? Bool {
+            textStorage.addAttribute(.checkListState, value: !state, range: paragraphRange)
         } else {
-            textStorage.addAttribute(.checkListState, value: true, range: paraRange)
+            textStorage.addAttribute(.checkListState, value: true, range: paragraphRange)
         }
         
         let generator = UIImpactFeedbackGenerator(style: .heavy)
         generator.impactOccurred()
         
         
+        if undoManager!.isUndoing || undoManager!.isRedoing{
+            self.selectedRange = paragraphRange
+            self.scrollRangeToVisible(selectedRange)
+        }
+        else{
+            if !paragraphRange.contains(selectedRange.location){
+                
+                self.selectedRange = NSRange(location: paragraphRange.upperBound - 1, length: 0)
+                self.scrollRangeToVisible(selectedRange)
+            }
+        }
+        
         undoManager?.registerUndo(withTarget: self, handler: { _ in
-            self.toggleCheckBoxState(paraRange: paraRange)
-            self.selectedRange = paraRange
-            self.scrollRangeToVisible(paraRange)
+            self.toggleCheckBoxState(paragraphRange: paragraphRange)
+            
         })
     }
 }

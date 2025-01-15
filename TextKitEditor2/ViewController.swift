@@ -13,7 +13,6 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-    
         
         // Create the custom text view
         let textLayoutManager = NSTextLayoutManager()
@@ -34,30 +33,7 @@ class ViewController: UIViewController {
             customTextView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             customTextView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
-       
-//        textContentStorage.replaceContents(in: textLayoutManager.documentRange, with: [NSTextParagraph(attributedString: NSAttributedString(string: "happy"))])
-        
-        
     }
-    
-    
+      
 }
 
-extension NSRange {
-    init(_ textrange: NSTextRange, contentManager: NSTextContentManager){
-        let loc = contentManager.offset(from: contentManager.documentRange.location, to: textrange.location)
-        let length = contentManager.offset(from: textrange.location, to: textrange.endLocation)
-        self.init(location: loc, length: length)
-    }
-}
-
-
-extension NSTextRange{
-    convenience init?(_ range: NSRange, contentManager: NSTextContentManager){
-        let location = contentManager.location(contentManager.documentRange.location, offsetBy: range.location)
-        let end = contentManager.location(location!, offsetBy: range.length)
-        
-        self.init(location: location!, end: end)
-    }
-}

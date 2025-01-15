@@ -21,6 +21,12 @@ extension TextView{
             name: UIResponder.keyboardWillHideNotification,
             object: nil
         )
+        notificationCenter.addObserver(self, selector: #selector(showKeyboard), name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+    
+    @objc func showKeyboard() {
+        // Ensure the keyboard is brought back for the desired text field or text view
+        self.becomeFirstResponder() // Replace `textView` with your actual text input control
     }
     
     @objc func keyboardWillShowNotification(_ notification : Notification) {
@@ -29,12 +35,13 @@ extension TextView{
         
         let keyboardScreenEndFrame = keyboardValue.cgRectValue
         
-        contentInset.bottom = (keyboardScreenEndFrame.height - safeAreaInsets.bottom)
+        contentInset.bottom = (keyboardScreenEndFrame.height - safeAreaInsets.bottom) + 50
         scrollRangeToVisible(selectedRange)
+        
     }
     
     @objc func keyboardWillHideNotification(_ : Notification) {
-        contentInset.bottom = .zero
+        contentInset.bottom = 400
     }
     
     func createToolbar() -> UIView {
@@ -166,11 +173,11 @@ extension TextView{
     }
     
     func updateLeftIndentButton() {
-        updateIndentButton(for: leftIndentButton!, isEnabled: leftIndentEnabled, iconName: "text.alignleft")
+        updateIndentButton(for: leftIndentButton!, isEnabled: isLeftIndentEnabled, iconName: "text.alignleft")
     }
     
     func updaterightIndentButton() {
-        updateIndentButton(for: rightIndentButton!, isEnabled: rightIndentEnabled, iconName: "text.alignright")
+        updateIndentButton(for: rightIndentButton!, isEnabled: isRightIndentEnabled, iconName: "text.alignright")
     }
 
     func updateBoldButton() {
@@ -185,7 +192,7 @@ extension TextView{
         updateButton(for: underlineButton!, isEnabled: isUnderlineEnabled, iconName: "underline")
     }
 
-    func updateStrikeButton() {
+    func updateStrikeThroughButton() {
         updateButton(for: strikeThroughButton!, isEnabled: isStrikeThroughEnabled, iconName: "strikethrough")
     }
     
@@ -205,7 +212,7 @@ extension TextView{
     
     @objc func toggleCheckBoxWrapper(){
         let range : NSRange = paragraphRange
-        toggleSelected(range: range)
+        toggleCheckBox(range: range)
     }
     
     @objc func toggleNumberedListWrapper(){
@@ -221,5 +228,112 @@ extension TextView{
     @objc func rightIndentWrapper(){
         let range : NSRange = paragraphRange
         rightIndent(range: range)
+    }
+}
+
+
+extension TextView {
+    
+    // Updating toolbar button states
+    func updateHighlighting(){
+        isBoldEnabled = false
+        isItalicEnabled = false
+        isUnderlineEnabled = false
+        isStrikeThroughEnabled = false
+        isCheckListEnabled = false
+        isNumberedListEnabled = false
+        isLeftIndentEnabled = false
+        isRightIndentEnabled = false
+        
+        if selectedRange.length > 0 {
+            
+            isCheckListEnabled = containsListType(range: selectedRange, paragraphType: .checkList, paragraphRanges: nil)
+            isNumberedListEnabled = containsListType(range: selectedRange, paragraphType: .NumberedList, paragraphRanges: nil)
+            isLeftIndentEnabled = canIndent(range: selectedRange, left: true, right: false)
+            isRightIndentEnabled = canIndent(range: selectedRange, left: false, right: true)
+            
+            textStorage.enumerateAttributes(in: selectedRange, options: []) { attributes, range, _ in
+                if let font = attributes[.font] as? UIFont {
+                    let traits = font.fontDescriptor.symbolicTraits
+                    if traits.contains(.traitBold) {
+                        isBoldEnabled = true
+                    }
+                    if traits.contains(.traitItalic) {
+                        isItalicEnabled = true
+                    }
+                }
+                
+                if let underlineStyle = attributes[.underlineStyle] as? Int, underlineStyle != 0 {
+                    isUnderlineEnabled = true
+                }
+                
+                if let strikeStyle = attributes[.strikethroughStyle] as? Int, strikeStyle != 0 {
+                    isStrikeThroughEnabled = true
+                }
+                
+                // Exit early if all styles are enabled
+                if isBoldEnabled && isItalicEnabled && isUnderlineEnabled && isStrikeThroughEnabled {
+                    return
+                }
+            }
+        } else {
+            guard let font = typingAttributes[.font] as? UIFont else {
+                isBoldEnabled = false
+                isItalicEnabled = false
+                isUnderlineEnabled = false
+                isStrikeThroughEnabled = false
+                return
+            }
+            isLeftIndentEnabled = false
+            isRightIndentEnabled = true
+            
+            isBoldEnabled = font.fontDescriptor.symbolicTraits.contains(.traitBold)
+            isItalicEnabled = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
+            
+            if let underlineStyle = typingAttributes[.underlineStyle] as? Int {
+                isUnderlineEnabled = underlineStyle != 0
+            } else {
+                isUnderlineEnabled = false
+            }
+            
+            if let strike = typingAttributes[.strikethroughStyle] as? Int {
+                isStrikeThroughEnabled = strike != 0
+            } else {
+                isStrikeThroughEnabled = false
+            }
+            
+            if selectedRange.location < textStorage.length {
+                var minLevel = 0
+                if let listType = textStorage.attribute(.listType, at: selectedRange.location, effectiveRange: nil){
+                    minLevel = 1
+                    if let _ = listType as? Int{
+                        isNumberedListEnabled = true
+                        isCheckListEnabled = false
+                    }
+                    else{
+                        isCheckListEnabled = true
+                        isNumberedListEnabled = false
+                    }
+                }
+                else{
+                    isCheckListEnabled = false
+                    isNumberedListEnabled = false
+                }
+                
+                if let indent = textStorage.attribute(.indentLevel, at: selectedRange.location, effectiveRange: nil) as? Int {
+                    if indent > minLevel {
+                        isLeftIndentEnabled = true
+                    } else {
+                        isLeftIndentEnabled = false
+                    }
+                    
+                    if indent < 4 {
+                        isRightIndentEnabled = true
+                    } else {
+                        isRightIndentEnabled = false
+                    }
+                }
+            }
+        }
     }
 }
