@@ -90,8 +90,9 @@ extension TextView{
             ("italic", #selector(setItalic)),
             ("underline", #selector(setUnderline)),
             ("strikethrough", #selector(setStrikeThrough)),
-            ("checkmark.circle", #selector(toggleCheckBoxWrapper)),
+            ("list.bullet", #selector(toggleBulletListWrapper)),
             ("list.number", #selector(toggleNumberedListWrapper)),
+            ("checkmark.circle", #selector(toggleCheckBoxWrapper)),
             ("text.alignleft", #selector(leftIndentWrapper)),
             ("text.alignright", #selector(rightIndentWrapper)),
             //                    ("hand.tap", #selector(toggleTap)),
@@ -128,6 +129,7 @@ extension TextView{
                 case  "strikethrough" : strikeThroughButton = button
                 case  "checkmark.circle" : checkListButton = button
                 case  "list.number" : numberedListButton = button
+                case "list.bullet": bulletListButton = button
                 case "text.alignright" : rightIndentButton = button
                 case "text.alignleft" : leftIndentButton = button
                 default:
@@ -204,6 +206,10 @@ extension TextView{
         updateButton(for: numberedListButton!, isEnabled: isNumberedListEnabled, iconName: "list.number")
     }
     
+    func updateBulletListButton() {
+        updateButton(for: bulletListButton!, isEnabled: isBulletListEnabled, iconName: "list.bullet")
+    }
+    
 }
     
 
@@ -229,6 +235,13 @@ extension TextView{
         let range : NSRange = paragraphRange
         rightIndent(range: range)
     }
+    
+    @objc func toggleBulletListWrapper(){
+        let range : NSRange = paragraphRange
+        toggleBulletList(range: range)
+    }
+    
+    
 }
 
 
@@ -244,11 +257,13 @@ extension TextView {
         isNumberedListEnabled = false
         isLeftIndentEnabled = false
         isRightIndentEnabled = false
+        isBulletListEnabled = false
         
         if selectedRange.length > 0 {
             
+            isBulletListEnabled = containsListType(range: selectedRange, paragraphType: .bulletList, paragraphRanges: nil)
             isCheckListEnabled = containsListType(range: selectedRange, paragraphType: .checkList, paragraphRanges: nil)
-            isNumberedListEnabled = containsListType(range: selectedRange, paragraphType: .NumberedList, paragraphRanges: nil)
+            isNumberedListEnabled = containsListType(range: selectedRange, paragraphType: .numberedList, paragraphRanges: nil)
             isLeftIndentEnabled = canIndent(range: selectedRange, left: true, right: false)
             isRightIndentEnabled = canIndent(range: selectedRange, left: false, right: true)
             
@@ -310,14 +325,22 @@ extension TextView {
                         isNumberedListEnabled = true
                         isCheckListEnabled = false
                     }
-                    else{
-                        isCheckListEnabled = true
-                        isNumberedListEnabled = false
+                    else if let value = listType as? String {
+                        if value == paragraphType.checkList.rawValue {
+                            isCheckListEnabled = true
+                            isNumberedListEnabled = false
+                            isBulletListEnabled = false
+                        } else if value == paragraphType.bulletList.rawValue {
+                            isCheckListEnabled = false
+                            isNumberedListEnabled = false
+                            isBulletListEnabled = true
+                        }
                     }
                 }
                 else{
                     isCheckListEnabled = false
                     isNumberedListEnabled = false
+                    isBulletListEnabled = false
                 }
                 
                 if let indent = textStorage.attribute(.indentLevel, at: selectedRange.location, effectiveRange: nil) as? Int {

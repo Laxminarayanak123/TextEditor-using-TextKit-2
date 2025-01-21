@@ -19,7 +19,7 @@ extension TextView {
         let paragraphRange = textStorage.mutableString.paragraphRange(for: range)
         let paraString = textStorage.attributedSubstring(from: paragraphRange)
         
-        handleListForRange(range: paragraphRange, paragraphType: .NumberedList)
+        handleListForRange(range: paragraphRange, paragraphType: .numberedList)
         
         let firstParagraphRange = textStorage.mutableString.paragraphRange(for: NSRange(location: range.location, length: 0))
         

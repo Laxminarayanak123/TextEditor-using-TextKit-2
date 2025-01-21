@@ -60,7 +60,7 @@ extension TextView : UIGestureRecognizerDelegate {
                         let fragY = fragment.layoutFragmentFrame.origin.y
                         let isInXBounds = location.x <= fragX  && location.x >= fragX + fragment.renderingSurfaceBounds.origin.x
                         // (24 * 0.2) for paragraph spacing
-                        let isInYBounds = location.y >= fragY && location.y <= fragY + lineHeight + (24 * 0.2)
+                        let isInYBounds = location.y >= fragY && location.y <= fragY + lineHeight + (24 * 0.2) + 10
                         
                         if(isInXBounds && isInYBounds), paragraphString.paragraphType == .checkList {
                             return true

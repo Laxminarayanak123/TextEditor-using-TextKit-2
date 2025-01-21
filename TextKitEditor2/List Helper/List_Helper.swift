@@ -39,16 +39,23 @@ extension TextView {
         //Remove only those paragraphs which contains this paragraphType
         if containsListType{
             for range in paragraphRanges{
-                if paragraphType == .NumberedList{
+                let paragraphString = getParagraphString(range: range)
+                if paragraphType == .numberedList{
                     if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? Int {
                         textStorage.removeAttribute(.listType, range: range)
                         leftIndentForListToggle(range: range)
                     }
                 }
-                else{
-                    if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? String {
+                else if paragraphType == .checkList{
+                    if paragraphString.isChecklist {
                         textStorage.removeAttribute(.listType, range: range)
                         textStorage.removeAttribute(.checkListState, range: range)
+                        leftIndentForListToggle(range: range)
+                    }
+                }
+                else if paragraphType == .bulletList{
+                    if paragraphString.isBulletlist {
+                        textStorage.removeAttribute(.listType, range: range)
                         leftIndentForListToggle(range: range)
                     }
                 }
@@ -58,14 +65,14 @@ extension TextView {
         // add the paragraphType to all the ranges
         else{
             for range in paragraphRanges{
-                if paragraphType == .NumberedList{
+                if paragraphType == .numberedList{
                     if textStorage.attribute(.listType, at: range.location, effectiveRange: nil) == nil{
                         rightIndentForListToggle(range: range)
                     }
                     
                     textStorage.addAttribute(.listType, value: 0, range: range)
                 }
-                else{
+                else if paragraphType == .checkList{
                     if textStorage.attribute(.listType, at: range.location, effectiveRange: nil) == nil {
                         rightIndentForListToggle(range: range)
                         
@@ -73,6 +80,14 @@ extension TextView {
                     
                     textStorage.addAttribute(.listType, value: paragraphType.rawValue, range: range)
                     textStorage.addAttribute(.checkListState, value: false, range: range)
+                }
+                else if paragraphType == .bulletList {
+                    if textStorage.attribute(.listType, at: range.location, effectiveRange: nil) == nil {
+                        rightIndentForListToggle(range: range)
+                        
+                    }
+                    
+                    textStorage.addAttribute(.listType, value: paragraphType.rawValue, range: range)
                 }
             }
         }
@@ -89,14 +104,16 @@ extension TextView {
         ranges = paragraphRanges ?? getParagraphRanges(for: textStorage.attributedSubstring(from: range), in: range)
         
         for range in ranges{
-            if paragraphType == .NumberedList {
+            if paragraphType == .numberedList {
                 if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? Int {
                     return true
                 }
                 
             } else {
-                if let _ = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? String {
-                    return true
+                if let string = textStorage.attribute(.listType, at: range.location, effectiveRange: nil) as? String {
+                    if string == paragraphType.rawValue{
+                        return true
+                    }
                 }
             }
         }

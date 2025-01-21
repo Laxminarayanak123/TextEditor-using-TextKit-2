@@ -9,5 +9,6 @@ import UIKit
 enum paragraphType : String{
     case plainParagraph = ""
     case checkList = "checkList"
-    case NumberedList = "0"
+    case numberedList = "0"
+    case bulletList = "bulletList"
 }

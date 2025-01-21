@@ -20,6 +20,7 @@ The goal of this project is to develop a text editor leveraging the features of 
 -  Custom implementation of Lists
     -  CheckList
     -  NumberedList
+    -  BulletList
 -  Undo and redo management 
 -  Accessory view
 -  Toolbar highlighting
@@ -38,6 +39,11 @@ In iOS 18, The renderingSurfaceBounds of last fragment of the document is not pr
 <div align = "center" >
   <video src = "https://github.com/user-attachments/assets/ca3c4062-f2c5-488b-b953-adb40178c55c" />
 </div>
+
+
+## Contributions
+
+We are always looking to improve this project. If you would like to contribute fork the repo and open a pull request with your changes.
 
 ## Author 
 

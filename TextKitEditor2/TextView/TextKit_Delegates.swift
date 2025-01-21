@@ -68,13 +68,22 @@ extension TextView : NSTextLayoutManagerDelegate{
                     let fragment = NumberedListTextLayoutFragment(textElement: textElement, range: textElement.elementRange!, number: number)
                     return fragment
                 }
-                let fragment = CheckboxTextLayoutFragment(textElement: textElement, range: textElement.elementRange!)
-                if let state = attrString.attribute(.checkListState, at: 0, effectiveRange: nil) as? Bool {
-                    fragment.isChecked = state
+                else if let value = value as? String{
+                    
+                    if value == paragraphType.checkList.rawValue {
+                        let fragment = CheckboxTextLayoutFragment(textElement: textElement, range: textElement.elementRange!)
+                        if let state = attrString.attribute(.checkListState, at: 0, effectiveRange: nil) as? Bool {
+                            fragment.isChecked = state
+                        }
+                        
+                        
+                        return fragment
+                    } else if value == paragraphType.bulletList.rawValue {
+                        let fragment = BulletListTextLayoutFragment(textElement: textElement, range: textElement.elementRange!)
+                        return fragment
+                    }
                 }
-                
-                
-                return fragment
+               
                 
             }
 

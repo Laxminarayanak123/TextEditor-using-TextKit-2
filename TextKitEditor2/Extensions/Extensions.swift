@@ -57,6 +57,28 @@ extension NSAttributedString {
         return false
     }
     
+    var isChecklist : Bool {
+        if self.string == "" { return false }
+        if let value = self.attribute(.listType, at: 0, effectiveRange: nil) as? String{
+            if value == "checkList" {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    var isBulletlist : Bool {
+        if self.string == "" { return false }
+        if let value = self.attribute(.listType, at: 0, effectiveRange: nil) as? String{
+            if value == "bulletList" {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
     var indentLevel : Int{
         if let value = self.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int{
             return value
@@ -78,7 +100,7 @@ extension NSAttributedString {
     var paragraphType : paragraphType{
         if let value = self.attribute(.listType, at: 0, effectiveRange: nil){
             if let _ = value as? Int{
-                return .NumberedList
+                return .numberedList
             }
             else{
                 return .checkList

@@ -59,6 +59,13 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
         }
     }
     
+    var bulletListButton : UIButton?
+    var isBulletListEnabled : Bool = false{
+        didSet{
+            updateBulletListButton()
+        }
+    }
+    
     var leftIndentButton : UIButton?
     var isLeftIndentEnabled : Bool = false{
         didSet{

@@ -12,7 +12,7 @@ extension TextView{
         let text = textStorage.attributedSubstring(from: paragraphRange)
         
         var indents: [(oldValue : Int, newIndent: Int, range: NSRange, minIndent : Int)] = []
-        textStorage.enumerateAttributes(in: range) { attributes, range, _ in
+        textStorage.enumerateAttributes(in: paragraphRange) { attributes, range, _ in
             
             let str = textStorage.attributedSubstring(from: range)
             let minLevel = str.containsListAttachment ? 1 : 0
@@ -48,7 +48,7 @@ extension TextView{
         
         let maxLevel = 4
         var indents: [(oldValue : Int, newIndent: Int, range: NSRange)] = []
-        textStorage.enumerateAttributes(in: range) { attributes, range, _ in
+         textStorage.enumerateAttributes(in: paragraphRange) { attributes, range, _ in
             let str = textStorage.attributedSubstring(from: range)
             
             let oldValue = str.attribute(.indentLevel, at: 0, effectiveRange: nil) as? Int ?? 0

@@ -49,7 +49,7 @@ extension TextView{
                                 toggleCheckBox(range: paragraphRange)
                                 return false
                             }
-                            else if type == .NumberedList{
+                            else if type == .numberedList{
                                 toggleNumberList(range: paragraphRange)
                                 return false
                             }
@@ -102,11 +102,13 @@ extension TextView{
             if let value = paragraphString.NumberedListIndex{
                 textStorage.addAttribute(.listType, value: value, range: NSRange(location: previousParagraphRange.location, length: 1))
             }
-            else{
-                textStorage.addAttribute(.listType, value: "checkList", range: NSRange(location: previousParagraphRange.location, length: 1))
+            else if paragraphString.isChecklist{
+                textStorage.addAttribute(.listType, value: paragraphType.checkList.rawValue, range: NSRange(location: previousParagraphRange.location, length: 1))
                 if let _ = textStorage.attribute(.checkListState, at: previousParagraphRange.location, effectiveRange: nil) as? Bool{
                     textStorage.addAttribute(.checkListState, value: false, range: paragraphRange)
                 }
+            } else if paragraphString.isBulletlist {
+                textStorage.addAttribute(.listType, value: paragraphType.bulletList.rawValue, range: NSRange(location: previousParagraphRange.location, length: 1))
             }
 
             modifyList(currentRange: NSRange(location: previousParagraphRange.location, length: 0), updateSelf: true)
