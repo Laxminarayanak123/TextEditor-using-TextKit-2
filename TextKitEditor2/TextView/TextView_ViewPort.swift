@@ -30,7 +30,7 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
             if oldBounds != textLayoutFragmentLayer.bounds {
                 textLayoutFragmentLayer.setNeedsDisplay()
             }
-            if oldPosition != textLayoutFragmentLayer.position {
+            if oldPosition != layer.position {
                 animate(textLayoutFragmentLayer, from: oldPosition, to: textLayoutFragmentLayer.position)
             }
         }
@@ -51,7 +51,7 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
             tlm.textViewportLayoutController.layoutViewport()
         }
         
-        contentLayer.frame = CGRect(origin: .zero, size: contentSize)
+        contentLayer.frame = CGRect(origin: .init(x: 0, y:  textContainerInset.top), size: contentSize)
     }
     
     
