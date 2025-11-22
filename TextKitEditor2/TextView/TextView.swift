@@ -80,13 +80,29 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
         }
     }
     
+    var contentLayer: CALayer! = nil
+    
+    var slowAnimations: Bool = false
+
+    var fragmentLayerMap: NSMapTable<NSTextLayoutFragment, CALayer>
+
+    var padding: CGFloat = 5.0
+    
     override init(frame: CGRect, textContainer: NSTextContainer?) {
+        
+        fragmentLayerMap = .weakToWeakObjects()
         
         super.init(frame: frame, textContainer: textContainer)
         
         textLayoutManager?.delegate = self
+        textLayoutManager?.textViewportLayoutController.delegate = self
+//        updateContentSizeIfNeeded()
+//        updateTextContainerSize()
+        layer.setNeedsLayout()
+
         textStorage.delegate = self
         textLayoutManager?.textContentManager?.delegate = self
+        configureContentLayer()
         setupTextView()
         inputAccessoryView = createToolbar()
         keyboardDismissMode = .interactiveWithAccessory
@@ -105,6 +121,15 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func configureContentLayer() {
+        guard contentLayer == nil else { return }
+        let layer = TextDocumentLayer()
+        layer.contentsScale = UIScreen.main.scale
+        layer.masksToBounds = true
+        contentLayer = layer
+        self.layer.addSublayer(contentLayer)
     }
     
     
