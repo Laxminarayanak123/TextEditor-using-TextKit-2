@@ -74,7 +74,7 @@ class TextLayoutFragmentLayer: CALayer {
     
     
     override func draw(in ctx: CGContext) {
-        layoutFragment.draw(at: /*.init(x: -5, y: 5)*/.zero, in: ctx)
+        layoutFragment.draw(at: .zero, in: ctx)
         
         
 //        ctx.saveGState()

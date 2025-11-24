@@ -51,7 +51,7 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
             tlm.textViewportLayoutController.layoutViewport()
         }
         
-        contentLayer.frame = CGRect(origin: .init(x: 0, y:  textContainerInset.top), size: contentSize)
+        contentLayer.frame = CGRect(origin: .init(x: textContainerInset.left, y:  textContainerInset.top), size: contentSize)
     }
     
     

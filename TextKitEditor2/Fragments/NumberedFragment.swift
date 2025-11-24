@@ -45,6 +45,7 @@ class NumberedListTextLayoutFragment : NSTextLayoutFragment {
             height: numberSize.height
         )
         
+        UIGraphicsPushContext(context)
         // Draw the number
         context.saveGState()
         numberString.draw(
@@ -52,6 +53,7 @@ class NumberedListTextLayoutFragment : NSTextLayoutFragment {
             withAttributes: attributes
         )
         context.restoreGState()
+        UIGraphicsPopContext()
         
         super.draw(at: point, in: context)
     }

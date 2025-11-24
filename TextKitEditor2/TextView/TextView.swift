@@ -93,6 +93,8 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
         fragmentLayerMap = .weakToWeakObjects()
         
         super.init(frame: frame, textContainer: textContainer)
+        textContainerInset.left = frame.width * 0.05
+        textContainerInset.right = frame.width * 0.05
         
         textLayoutManager?.delegate = self
         textLayoutManager?.textViewportLayoutController.delegate = self
@@ -116,6 +118,13 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
         checkListTapGesture()
         
         contentInset.bottom = 400
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        textContainerInset.left = frame.width * 0.05
+        textContainerInset.right = frame.width * 0.05
     }
     
     

@@ -37,6 +37,8 @@ class BulletListTextLayoutFragment : NSTextLayoutFragment {
             height: numberSize.height
         )
         
+        UIGraphicsPushContext(context)
+        
         // Draw the number
         context.saveGState()
         numberString.draw(
@@ -44,6 +46,8 @@ class BulletListTextLayoutFragment : NSTextLayoutFragment {
             withAttributes: attributes
         )
         context.restoreGState()
+        
+        UIGraphicsPopContext()
         
         super.draw(at: point, in: context)
     }
