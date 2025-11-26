@@ -13,7 +13,7 @@ extension TextView : UIGestureRecognizerDelegate {
         tapGesture.name = "checkbox"
         tapGesture.delegate = self
         
-        self.addGestureRecognizer(tapGesture)
+//        self.addGestureRecognizer(tapGesture)
     }
     
     @objc func handleTap(_ gesture : UITapGestureRecognizer){
@@ -104,8 +104,8 @@ extension TextView : UIGestureRecognizerDelegate {
             textStorage.addAttribute(.checkListState, value: true, range: paragraphRange)
         }
         
-        let generator = UIImpactFeedbackGenerator(style: .heavy)
-        generator.impactOccurred()
+//        let generator = UIImpactFeedbackGenerator(style: .heavy)
+//        generator.impactOccurred()
         
         
         if undoManager!.isUndoing || undoManager!.isRedoing{
@@ -116,7 +116,7 @@ extension TextView : UIGestureRecognizerDelegate {
             if !paragraphRange.contains(selectedRange.location){
                 
                 self.selectedRange = NSRange(location: paragraphRange.upperBound - 1, length: 0)
-                self.scrollRangeToVisible(selectedRange)
+//                self.scrollRangeToVisible(selectedRange)
             }
         }
         

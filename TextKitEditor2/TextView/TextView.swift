@@ -88,6 +88,16 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
 
     var padding: CGFloat = 5.0
     
+    let overlayView = PassThroughOverlayView()
+    
+    let fragmentViewMap = NSMapTable<NSTextLayoutFragment, UIView>.weakToWeakObjects()
+    
+    var oldFragmentViewMap: [NSTextLayoutFragment : UIView] = [:]
+    
+    var newFragmentViewMap: [NSTextLayoutFragment : UIView] = [:]
+    
+    var isDraggingCheckbox: Bool = false
+    
     override init(frame: CGRect, textContainer: NSTextContainer?) {
         
         fragmentLayerMap = .weakToWeakObjects()
@@ -118,6 +128,13 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
         checkListTapGesture()
         
         contentInset.bottom = 400
+        
+        overlayView.backgroundColor = .green.withAlphaComponent(0.3)
+        overlayView.isUserInteractionEnabled = true
+        addSubview(overlayView)
+        overlayView.frame = bounds
+//        overlayView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        
     }
     
     override func layoutSubviews() {
