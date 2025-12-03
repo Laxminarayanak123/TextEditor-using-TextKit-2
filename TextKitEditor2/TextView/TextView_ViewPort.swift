@@ -11,17 +11,28 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
     
     func viewportBounds(for textViewportLayoutController: NSTextViewportLayoutController) -> CGRect {
         
-        CGRect(origin: .init(x: 0, y: contentOffset.y), size: bounds.size)
+        let offset = self.frame.height / 2
+        
+        let rect : CGRect = .init(x: 0, y: contentOffset.y - offset, width: bounds.size.width, height: 2 * bounds.size.height)
+        
+        return rect
     }
     
     func textViewportLayoutControllerWillLayout(_ controller: NSTextViewportLayoutController) {
-        contentLayer.sublayers = nil
-        let visiblerect : CGRect = .init(x: 0, y: contentOffset.y, width: frame.width, height: frame.height)
-        overlayView.subviews.forEach {
-            if let _ = $0 as? CheckBoxView {
-                if !visiblerect.contains($0.frame) {
-                    $0.removeFromSuperview()
-                }
+        
+        let offset = self.frame.height / 2
+        
+        let visiblerect : CGRect = .init(x: 0, y: contentOffset.y - offset, width: frame.width, height: 2 * frame.height)
+        
+        renderingViews_Container.subviews.forEach {
+            if !visiblerect.contains($0.frame) {
+                $0.removeFromSuperview()
+            }
+        }
+        
+        checkboxViews_Container.subviews.forEach {
+            if !visiblerect.contains($0.frame) {
+                $0.removeFromSuperview()
             }
         }
         CATransaction.begin()
@@ -30,76 +41,66 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
     
     func textViewportLayoutController(_ textViewportLayoutController: NSTextViewportLayoutController,
                                       configureRenderingSurfaceFor textLayoutFragment: NSTextLayoutFragment) {
-        let (textLayoutFragmentLayer, didCreate) = findOrCreateLayer(textLayoutFragment)
+        let (fragmentView, didCreate) = findOrCreateTextRenderingView(textLayoutFragment)
         if !didCreate {
-            let oldPosition = textLayoutFragmentLayer.position
-            let oldBounds = textLayoutFragmentLayer.bounds
-            textLayoutFragmentLayer.updateGeometry()
-            if oldBounds != textLayoutFragmentLayer.bounds {
-                textLayoutFragmentLayer.setNeedsDisplay()
+            let oldFrame = fragmentView.frame
+            let oldBounds = fragmentView.bounds
+            fragmentView.updateGeometry()
+            if oldBounds != fragmentView.bounds {
+                fragmentView.setNeedsDisplay()
             }
-            if oldPosition != layer.position {
-                animate(textLayoutFragmentLayer, from: oldPosition, to: textLayoutFragmentLayer.position)
+            if oldFrame.origin != fragmentView.frame.origin {
+//                animate(fragmentView, from: oldFrame.origin, to: fragmentView.frame.origin)
             }
         }
         
-        contentLayer.addSublayer(textLayoutFragmentLayer)
+        renderingViews_Container.addSubview(fragmentView)
         
         if let textLayoutFragment = textLayoutFragment as? CheckboxTextLayoutFragment {
 
-            let (fragmentView, _) = findOrCreateView(for: textLayoutFragment)
+            let (checkboxView, _) = findOrCreateCheckboxView(for: textLayoutFragment)
             
             let fragmentFrame = textLayoutFragment.layoutFragmentFrame
             
             
-            let viewWidth: CGFloat = 32
-            let viewX: CGFloat = fragmentFrame.minX - viewWidth
-            let padding = 17.0
-            let viewFrame = CGRect(
-                x: viewX - padding,
-                y: fragmentFrame.minY + 10,
-                width: viewWidth,
-                height: viewWidth
-            )
             
-            fragmentView.frame = viewFrame
-            overlayView.addSubview(fragmentView)
             
+            checkboxView.frame = getCheckBoxFrameFromGivenFrame(fragmentFrame: fragmentFrame)
+            checkboxViews_Container.addSubview(checkboxView)
 
-            oldFragmentViewMap.removeValue(forKey: textLayoutFragment)
             
-            newFragmentViewMap[textLayoutFragment] = fragmentView
+            // cleanup of checkbox views
+            oldCheckBoxFragmentMap.removeValue(forKey: textLayoutFragment)
+            
+            newCheckBoxFragmentMap[textLayoutFragment] = checkboxView
             
         }
+        
+        // cleanup of text rendering views
+        oldRenderingViewMap.removeValue(forKey: textLayoutFragment)
+
+        newRenderingViewMap[textLayoutFragment] = fragmentView
+
     }
     
     func textViewportLayoutControllerDidLayout(_ controller: NSTextViewportLayoutController) {
         
-        for item in oldFragmentViewMap{
+        // cleanup of views
+        for item in oldCheckBoxFragmentMap{
             item.value.removeFromSuperview()
         }
         
-        oldFragmentViewMap = newFragmentViewMap
-        newFragmentViewMap.removeAll()
+        for item in oldRenderingViewMap{
+            item.value.removeFromSuperview()
+        }
+        
+        oldCheckBoxFragmentMap = newCheckBoxFragmentMap
+        oldRenderingViewMap = newRenderingViewMap
+        newCheckBoxFragmentMap.removeAll()
+        newRenderingViewMap.removeAll()
         
         CATransaction.commit()
     }
-    
-    override func layoutSublayers(of layer: CALayer) {
-        
-        super.layoutSublayers(of: layer)
-        
-        assert(layer == self.layer)
-        if let tlm = textLayoutManager{
-            tlm.textViewportLayoutController.layoutViewport()
-        }
-        
-        updateContentSizeIfNeeded()
-        contentLayer.frame = CGRect(origin: .init(x: textContainerInset.left, y:  textContainerInset.top), size: contentSize)
-        overlayView.frame = contentLayer.frame
-        
-    }
-    
     
     func updateContentSizeIfNeeded() {
         
@@ -117,28 +118,34 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
         }
     }
     
-    func findOrCreateLayer(_ textLayoutFragment: NSTextLayoutFragment) -> (TextLayoutFragmentLayer, Bool) {
-        if let layer = fragmentLayerMap.object(forKey: textLayoutFragment) as? TextLayoutFragmentLayer {
-            return (layer, false)
+    func findOrCreateTextRenderingView(_ textLayoutFragment: NSTextLayoutFragment) -> (TextRenderingView, Bool) {
+        if let view = fragmentRenderingViewMap.object(forKey: textLayoutFragment) {
+            return (view, false)
         } else {
-            let layer = TextLayoutFragmentLayer(layoutFragment: textLayoutFragment, padding: padding)
-            fragmentLayerMap.setObject(layer, forKey: textLayoutFragment)
-            return (layer, true)
+            let view = TextRenderingView(layoutFragment: textLayoutFragment, padding: padding)
+            fragmentRenderingViewMap.setObject(view, forKey: textLayoutFragment)
+            view.isUserInteractionEnabled = false
+            return (view, true)
         }
     }
     
     
     
-    func animate(_ layer: CALayer, from source: CGPoint, to destination: CGPoint) {
-        let animation = CABasicAnimation(keyPath: "position")
-        animation.fromValue = source
-        animation.toValue = destination
-        animation.duration = 0.6
-//        layer.add(animation, forKey: nil)
+    func animate(_ view: UIView, from source: CGPoint, to destination: CGPoint) {
+//        let animation = CABasicAnimation(keyPath: "position")
+//        animation.fromValue = source
+//        animation.toValue = destination
+//        animation.duration = 0.6
+//        view.layer.add(animation, forKey: nil)
+        view.transform = .init(translationX: 0, y: source.y)
+        
+        UIView.animate(withDuration: 0.8) {
+            view.transform = .init(translationX: 0, y: destination.y)
+        }
     }
     
-    func findOrCreateView(for textLayoutFragment: NSTextLayoutFragment) -> (UIView, Bool) {
-        if let view = fragmentViewMap.object(forKey: textLayoutFragment) {
+    func findOrCreateCheckboxView(for textLayoutFragment: NSTextLayoutFragment) -> (UIView, Bool) {
+        if let view = fragmentCheckBoxViewMap.object(forKey: textLayoutFragment) {
             return (view, false)
         } else {
             // Customize this view however you want
@@ -159,7 +166,7 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
             }
             
             // You can also plug in a custom checkbox view here.
-            fragmentViewMap.setObject(v, forKey: textLayoutFragment)
+            fragmentCheckBoxViewMap.setObject(v, forKey: textLayoutFragment)
             return (v, true)
         }
     }
@@ -171,4 +178,18 @@ extension TextView : NSTextViewportLayoutControllerDelegate {
 //        return isDraggingCheckbox ? rect : superRect
 //    }
     
+    func getCheckBoxFrameFromGivenFrame(fragmentFrame : CGRect) -> CGRect{
+                
+        let viewWidth: CGFloat = 32
+        let viewX: CGFloat = fragmentFrame.minX - viewWidth
+        let padding = 17.0
+        let viewFrame = CGRect(
+            x: viewX - padding,
+            y: fragmentFrame.minY + 10,
+            width: viewWidth,
+            height: viewWidth
+        )
+        
+        return viewFrame
+    }
 }

@@ -80,28 +80,41 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
         }
     }
     
-    var contentLayer: CALayer! = nil
-    
     var slowAnimations: Bool = false
 
-    var fragmentLayerMap: NSMapTable<NSTextLayoutFragment, CALayer>
+    
+    // new viewport implementation
+    var renderingViews_Container: PassThroughOverlayView!
+    
+
+    var fragmentRenderingViewMap = NSMapTable<NSTextLayoutFragment, TextRenderingView>.weakToWeakObjects()
 
     var padding: CGFloat = 5.0
     
-    let overlayView = PassThroughOverlayView()
+    let checkboxViews_Container = PassThroughOverlayView()
     
-    let fragmentViewMap = NSMapTable<NSTextLayoutFragment, UIView>.weakToWeakObjects()
+    let fragmentCheckBoxViewMap = NSMapTable<NSTextLayoutFragment, UIView>.weakToWeakObjects()
     
-    var oldFragmentViewMap: [NSTextLayoutFragment : UIView] = [:]
+    var oldCheckBoxFragmentMap: [NSTextLayoutFragment : UIView] = [:]
     
-    var newFragmentViewMap: [NSTextLayoutFragment : UIView] = [:]
+    var newCheckBoxFragmentMap: [NSTextLayoutFragment : UIView] = [:]
+    
+    var oldRenderingViewMap: [NSTextLayoutFragment : TextRenderingView] = [:]
+    
+    var newRenderingViewMap: [NSTextLayoutFragment : TextRenderingView] = [:]
     
     var isDraggingCheckbox: Bool = false
     
+    
+    // for autosorting
+    var allcheckboxes : [checkboxItem] = []
+
+    var checkedCheckboxes : [checkboxItem] = []
+    
+    var uncheckedCheckboxes : [checkboxItem] = []
+    
     override init(frame: CGRect, textContainer: NSTextContainer?) {
-        
-        fragmentLayerMap = .weakToWeakObjects()
-        
+            
         super.init(frame: frame, textContainer: textContainer)
         textContainerInset.left = frame.width * 0.05
         textContainerInset.right = frame.width * 0.05
@@ -114,7 +127,6 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
 
         textStorage.delegate = self
         textLayoutManager?.textContentManager?.delegate = self
-        configureContentLayer()
         setupTextView()
         inputAccessoryView = createToolbar()
         keyboardDismissMode = .interactiveWithAccessory
@@ -129,33 +141,49 @@ class TextView : UITextView, UITextViewDelegate, NSTextContentManagerDelegate{
         
         contentInset.bottom = 400
         
-        overlayView.backgroundColor = .green.withAlphaComponent(0.3)
-        overlayView.isUserInteractionEnabled = true
-        addSubview(overlayView)
-        overlayView.frame = bounds
-//        overlayView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        // new viewport implementation
+        configureRenderingViewsContainer()
+
+        configureCheckboxViewsContainer()
         
     }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func configureRenderingViewsContainer() {
+        guard renderingViews_Container == nil else { return }
+        let view = PassThroughOverlayView()
+        view.contentScaleFactor = UIScreen.main.scale
+        view.clipsToBounds = true
+        view.isOpaque = false
+        renderingViews_Container = view
+        addSubview(renderingViews_Container)
+    }
+    
+    func configureCheckboxViewsContainer() {
+        //        overlayView.backgroundColor = .green.withAlphaComponent(0.3)
+        checkboxViews_Container.isUserInteractionEnabled = true
+        addSubview(checkboxViews_Container)
+        checkboxViews_Container.frame = bounds
+    }
+    
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
         textContainerInset.left = frame.width * 0.05
         textContainerInset.right = frame.width * 0.05
-    }
-    
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func configureContentLayer() {
-        guard contentLayer == nil else { return }
-        let layer = TextDocumentLayer()
-        layer.contentsScale = UIScreen.main.scale
-        layer.masksToBounds = true
-        contentLayer = layer
-        self.layer.addSublayer(contentLayer)
+        
+        if let tlm = textLayoutManager {
+            tlm.textViewportLayoutController.layoutViewport()
+        }
+        
+        updateContentSizeIfNeeded()
+        let contentFrame = CGRect(origin: .init(x: textContainerInset.left, y: textContainerInset.top), size: contentSize)
+        renderingViews_Container.frame = contentFrame
+        checkboxViews_Container.frame = contentFrame
     }
     
     

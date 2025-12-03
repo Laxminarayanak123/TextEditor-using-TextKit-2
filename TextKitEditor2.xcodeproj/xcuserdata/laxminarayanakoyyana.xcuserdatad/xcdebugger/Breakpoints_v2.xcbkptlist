@@ -23,16 +23,48 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "3FF959EF-4B37-4D0A-AEE2-F1E163419FF7"
+            uuid = "F114D29F-6C10-4DFE-BE85-06766EB8C61B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TextKitEditor2/CheckList/Checklist_AutoSort.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "192"
+            endingLineNumber = "192"
+            landmarkName = "modifyTextStorageWhenAutoSort(sourceRange:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "0EAE0339-D919-4F84-BB7F-7190B7029C12"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "TextKitEditor2/TextView/TextView_ViewPort.swift"
+            filePath = "TextKitEditor2/CheckList/Checklist_AutoSort.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "34"
-            endingLineNumber = "34"
-            landmarkName = "textViewportLayoutController(_:configureRenderingSurfaceFor:)"
+            startingLineNumber = "211"
+            endingLineNumber = "211"
+            landmarkName = "modifyTextStorageWhenAutoSort(sourceRange:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6AC2E6EB-5768-4F4F-9D64-7425CBE3DF10"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TextKitEditor2/CheckList/Checklist_AutoSort.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "241"
+            endingLineNumber = "241"
+            landmarkName = "modifyTextStorageWhenAutoSort(sourceRange:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

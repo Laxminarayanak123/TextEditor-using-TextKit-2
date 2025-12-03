@@ -60,15 +60,27 @@ class CheckBoxView: UIView, UIDragInteractionDelegate {
         if let textview = textView, let fragment = textLayoutFragment as? CheckboxTextLayoutFragment, let element = fragment.textElement, let textRange = element.elementRange {
             let range = NSRange(textRange, contentManager: textview.textContentStorage)
 
+            
+            textview.isUserInteractionEnabled = false
             self.isChecked = !fragment.isChecked
             animateCheckmarkChange()
 
             let generator = UIImpactFeedbackGenerator(style: .heavy)
             generator.impactOccurred()
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 ){
-                textview.toggleCheckBoxState(paragraphRange: range)
+//            animateView()
+            textview.AutoSort(sourceRange: range)
+
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 ){
+
+//                textview.toggleCheckBoxState(paragraphRange: range)
+
+                textview.isUserInteractionEnabled = true
             }
+            
+            print(fragment.layoutFragmentFrame, fragment.renderingSurfaceBounds, range)
+            
         }
     }
     
